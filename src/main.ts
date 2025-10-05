@@ -10,7 +10,7 @@ async function bootstrap() {
 
   // Habilitar CORS para el frontend
 app.enableCors({
-  origin: ['http://localhost:4200','http://localhost:8100','https://front-end-gestad.onrender.com'],
+  origin: ['http://localhost:4200','http://localhost:8100','https://gest-cond.onrender.com'],
   credentials: true,
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
