@@ -9,12 +9,18 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
   // Habilitar CORS para el frontend
-app.enableCors({
-  origin: ['http://localhost:4200','http://localhost:8100','https://gest-cond.onrender.com'],
-  credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-})
+  app.enableCors({
+    origin: [
+      'http://localhost:4200',
+      'http://localhost:8100',
+      'https://gest-cond.onrender.com'
+    ],
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
 
   // Configuración Swagger
   const config = new DocumentBuilder()
