@@ -10,7 +10,8 @@ import {
 // Enum para reflejar el CHECK de la base de datos
 export enum RolUsuario {
   ADMIN = 'administrador',
-  USUARIO = 'usuario',
+  GUARDIA = 'guardia',
+  LOCATARIO = 'locatario',
 }
 
 @Entity('usuarios')
@@ -18,8 +19,8 @@ export class Usuario {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'nombre_usuario', type: 'varchar', length: 100 })
-  nombre_usuario: string;
+  @Column({ name: 'nombre', type: 'varchar', length: 100 })
+  nombre: string;
 
   @Column({
     unique: true,
@@ -36,8 +37,8 @@ export class Usuario {
   @Column({ type: 'varchar', length: 255, select: false })
   password: string;
 
-  @Column({ type: 'enum', enum: RolUsuario })
-  rol: RolUsuario;
+  @Column({ type: 'varchar', length: 20 })
+rol: RolUsuario;
 
   @Column({ type: 'boolean', default: true })
   activo: boolean;

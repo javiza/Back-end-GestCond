@@ -38,7 +38,7 @@ async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
 async findAll(): Promise<Usuario[]> {
   return this.usuariosRepo.find({
     where: { activo: true },
-    select: ['id', 'nombre_usuario', 'rut', 'email', 'rol', 'activo', 'fecha_creacion'],
+    select: ['id', 'nombre', 'rut', 'email', 'rol', 'activo', 'fecha_creacion'],
   });
 }
 
@@ -46,7 +46,7 @@ async findAll(): Promise<Usuario[]> {
   async findOne(id: number): Promise<Usuario> {
     const usuario = await this.usuariosRepo.findOne({
       where: { id },
-      select: ['id', 'nombre_usuario', 'rut', 'email', 'rol', 'fecha_creacion'],
+      select: ['id', 'nombre', 'rut', 'email', 'rol', 'fecha_creacion'],
     });
     if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
@@ -59,7 +59,7 @@ async findAll(): Promise<Usuario[]> {
       where: { email },
       select: [
         'id',
-        'nombre_usuario',
+        'nombre',
         'rut',
         'email',
         'password', // necesario para login

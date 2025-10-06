@@ -13,6 +13,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Iniciar sesión y obtener JWT' })
   @ApiResponse({ status: 201, description: 'Usuario autenticado, token generado' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
+  @ApiResponse({ status: 409, description: 'Email o RUT ya existen' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }

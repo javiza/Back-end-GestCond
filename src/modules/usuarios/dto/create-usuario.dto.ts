@@ -14,7 +14,7 @@ export class CreateUsuarioDto {
   @ApiProperty({ example: 'Juan Pérez', description: 'Nombre completo del usuario' })
   @IsNotEmpty()
   @IsString()
-  nombre_usuario: string;
+  nombre: string;
 
   @ApiProperty({ example: '12345678-9', description: 'RUT chileno válido con guion' })
   @IsNotEmpty()

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-type Rol = 'administrador' | 'usuario';
+type Rol = 'administrador' | 'guardia' | 'locatario' ;
 
 @Injectable()
 export class RolesGuard implements CanActivate {
