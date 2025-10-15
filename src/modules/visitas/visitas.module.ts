@@ -3,11 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Visita } from './visita.entity';
 import { VisitasService } from './visitas.service';
 import { VisitasController } from './visitas.controller';
-import { Casa } from '../casas/casa.entity';
 import { Usuario } from '../usuarios/usuarios.entity';
+import { Casa } from '../casas/casa.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Visita, Casa, Usuario])],
+  imports: [TypeOrmModule.forFeature([Visita, Usuario, Casa])],
   controllers: [VisitasController],
   providers: [VisitasService],
   exports: [VisitasService],

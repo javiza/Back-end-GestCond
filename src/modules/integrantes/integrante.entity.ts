@@ -1,27 +1,37 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Usuario } from '../usuarios/usuarios.entity';
 import { Casa } from '../casas/casa.entity';
-import { Vehiculo } from '../vehiculos/vehiculo.entity';
+import { Vehiculo } from '../vehiculo/vehiculo.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('integrantes')
 export class Integrante {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 100 })
+  @ApiProperty({ example: 'María López' })
+  @Column({ type: 'varchar', length: 100 })
   nombre: string;
 
-  @Column({ length: 50 })
+  @ApiProperty({ example: 'Hija' })
+  @Column({ type: 'varchar', length: 50 })
   parentesco: string;
 
-  @ManyToOne(() => Usuario, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Usuario, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_locatario' })
   locatario: Usuario;
 
-  @ManyToOne(() => Casa, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Casa, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_casa' })
   casa: Casa;
 
-  @OneToMany(() => Vehiculo, v => v.integrante)
-  vehiculos: Vehiculo[];
+  @ManyToOne(() => Vehiculo, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'id_vehiculo' })
+  vehiculo?: Vehiculo;
 }

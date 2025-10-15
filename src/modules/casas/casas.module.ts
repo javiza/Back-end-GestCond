@@ -3,10 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Casa } from './casa.entity';
 import { CasasService } from './casas.service';
 import { CasasController } from './casas.controller';
-import { Usuario } from '../usuarios/usuarios.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Casa, Usuario])],
+  imports: [TypeOrmModule.forFeature([Casa])],
   controllers: [CasasController],
   providers: [CasasService],
   exports: [CasasService],

@@ -1,8 +1,23 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsEmail } from 'class-validator';
+
 export class CreateEmpresaContratistaDto {
-  @IsString() @IsNotEmpty() nombre_empresa: string;
-  @IsOptional() @IsString() rubro?: string;
-  @IsOptional() @IsString() telefono?: string;
-  @IsOptional() @IsString() email?: string;
-  @IsOptional() @IsBoolean() activa?: boolean;
+  @IsNotEmpty()
+  @IsString()
+  nombre_encargado: string;
+
+  @IsNotEmpty()
+  @IsString()
+  nombre_empresa: string;
+
+  @IsOptional()
+  @IsString()
+  rubro?: string;
+
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 }

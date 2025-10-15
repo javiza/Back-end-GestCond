@@ -1,58 +1,55 @@
-
-
 -- =============================================
--- 🏘️ SISTEMA DE CONDOMINIO HABITACIONAL
+-- 🏘️ SISTEMA DE CONDOMINIO HABITACIONAL (versión final corregida)
 -- Autor: Jonathan Bustos
--- Motor: PostgreSQL
+-- Motor: PostgreSQL 16
 -- =============================================
+create database condominio2;
+-- =============================================
+-- 1️⃣ TABLA: CASAS
+-- =============================================
+CREATE TABLE casas (
+  id SERIAL PRIMARY KEY,
+  numero VARCHAR(6) NOT NULL UNIQUE,
+  direccion VARCHAR(150) NOT NULL
+);
 
 -- =============================================
--- 1️⃣ Tabla: USUARIOS
+-- 2️⃣ TABLA: USUARIOS
 -- =============================================
 CREATE TABLE usuarios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
-  rut VARCHAR(12) UNIQUE NOT NULL
-      CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
+  rut VARCHAR(12) UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   rol VARCHAR(20) CHECK (rol IN ('administrador', 'guardia', 'locatario')) NOT NULL,
   activo BOOLEAN DEFAULT TRUE,
-  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
- drop table usuarios cascade;
-
-
--- =============================================
--- 2️⃣ Tabla: CASAS
--- =============================================
-CREATE TABLE casas (
-  id SERIAL PRIMARY KEY,
-  direccion VARCHAR(150) NOT NULL,
-  id_locatario INT NOT NULL,
-  FOREIGN KEY (id_locatario) REFERENCES usuarios(id) ON DELETE CASCADE
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  id_casa INT,
+  FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE SET NULL
 );
 
 -- =============================================
--- 3️⃣ Tabla: VEHICULOS
+-- 3️⃣ TABLA: VEHÍCULOS
 -- =============================================
 CREATE TABLE vehiculos (
   id SERIAL PRIMARY KEY,
-  patente VARCHAR(10) UNIQUE NOT NULL
-      CHECK (patente ~ '^[A-Z0-9-]{5,10}$'),
+  patente VARCHAR(10) UNIQUE NOT NULL,
   marca VARCHAR(50),
   modelo VARCHAR(50),
   color VARCHAR(30),
+  tipo_vehiculo VARCHAR(20) CHECK (tipo_vehiculo IN ('auto', 'moto')),
   tipo_propietario VARCHAR(20) CHECK (tipo_propietario IN ('locatario', 'integrante')) DEFAULT 'locatario',
   id_casa INT NOT NULL,
   id_locatario INT NOT NULL,
   id_integrante INT,
   FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE CASCADE,
-  FOREIGN KEY (id_locatario) REFERENCES usuarios(id) ON DELETE CASCADE
+  FOREIGN KEY (id_locatario) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_integrante) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
 -- =============================================
--- 4️⃣ Tabla: INTEGRANTES
+-- 4️⃣ TABLA: INTEGRANTES
 -- =============================================
 CREATE TABLE integrantes (
   id SERIAL PRIMARY KEY,
@@ -67,7 +64,40 @@ CREATE TABLE integrantes (
 );
 
 -- =============================================
--- 5️⃣ Tabla: VISITAS
+-- 5️⃣ TABLA: EMPRESAS CONTRATISTAS
+-- =============================================
+CREATE TABLE empresas_contratistas (
+  id SERIAL PRIMARY KEY,
+  nombre_encargado VARCHAR(100) NOT NULL,
+  nombre_empresa VARCHAR(100) NOT NULL,
+  rubro VARCHAR(100),
+  telefono VARCHAR(20),
+  email VARCHAR(100),
+  fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_termino TIMESTAMP,
+  activa BOOLEAN DEFAULT TRUE
+);
+
+-- =============================================
+-- 6️⃣ TABLA: PERSONAL INTERNO
+-- =============================================
+CREATE TABLE personal_interno (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  rut VARCHAR(12) UNIQUE NOT NULL,
+  cargo VARCHAR(100) NOT NULL,
+  empresa_externa BOOLEAN DEFAULT FALSE,
+  id_empresa INT,
+  id_administrador INT,
+  activo BOOLEAN DEFAULT TRUE,
+  fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_termino TIMESTAMP,
+  FOREIGN KEY (id_empresa) REFERENCES empresas_contratistas(id) ON DELETE SET NULL,
+  FOREIGN KEY (id_administrador) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+-- =============================================
+-- 7️⃣ TABLA: VISITAS
 -- =============================================
 CREATE TABLE visitas (
   id SERIAL PRIMARY KEY,
@@ -82,21 +112,32 @@ CREATE TABLE visitas (
 );
 
 -- =============================================
--- 6️⃣ Tabla: REGISTROS_INGRESO
+-- 8️⃣ TABLA: REGISTROS DE INGRESO
 -- =============================================
 CREATE TABLE registros_ingreso (
   id SERIAL PRIMARY KEY,
+  id_casa INT,
   id_visita INT,
   id_personal_interno INT,
+  id_personal_externo INT,
   fecha_hora_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_hora_salida TIMESTAMP,
   id_guardia INT NOT NULL,
+  tipo_registro VARCHAR(20) CHECK (tipo_registro IN ('visita', 'interno', 'externo')),
+  nombre VARCHAR(100),
+  rut VARCHAR(12) CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
+  observacion TEXT NOT NULL,
+  patente VARCHAR(10),
+  tipo_vehiculo VARCHAR(20) CHECK (tipo_vehiculo IN ('moto', 'auto')),
   FOREIGN KEY (id_visita) REFERENCES visitas(id) ON DELETE SET NULL,
+  FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE SET NULL,
+  FOREIGN KEY (id_personal_interno) REFERENCES personal_interno(id) ON DELETE SET NULL,
+  FOREIGN KEY (id_personal_externo) REFERENCES empresas_contratistas(id) ON DELETE SET NULL,
   FOREIGN KEY (id_guardia) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 -- =============================================
--- 7️⃣ Tabla: NO_AUTORIZADOS
+-- 9️⃣ TABLA: NO AUTORIZADOS
 -- =============================================
 CREATE TABLE no_autorizados (
   id SERIAL PRIMARY KEY,
@@ -105,67 +146,38 @@ CREATE TABLE no_autorizados (
   id_casa INT,
   motivo TEXT,
   fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  id_guardia INT NOT NULL,
+  id_administrador INT,
   FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE SET NULL,
-  FOREIGN KEY (id_guardia) REFERENCES usuarios(id) ON DELETE CASCADE
+  FOREIGN KEY (id_administrador) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 -- =============================================
--- 8️⃣ Tabla: EMPRESAS_CONTRATISTAS
+-- 🔟 TABLA: RONDAS
 -- =============================================
-CREATE TABLE empresas_contratistas (
+CREATE TABLE rondas (
   id SERIAL PRIMARY KEY,
-  nombre_empresa VARCHAR(100) NOT NULL,
-  rubro VARCHAR(100),
-  telefono VARCHAR(20),
-  email VARCHAR(100),
-  activa BOOLEAN DEFAULT TRUE
+  nombre_guardia VARCHAR(100),
+  observaciones VARCHAR(100) NOT NULL,
+  fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_termino TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  id_guardia INT,
+  FOREIGN KEY (id_guardia) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
 -- =============================================
--- 9️⃣ Tabla: PERSONAL_INTERNO
+-- 11️⃣ TABLA: OBSERVACIONES
 -- =============================================
-CREATE TABLE personal_interno (
+CREATE TABLE observaciones (
   id SERIAL PRIMARY KEY,
-  nombre VARCHAR(100) NOT NULL,
-  rut VARCHAR(12) UNIQUE NOT NULL,
-  cargo VARCHAR(100) NOT NULL,
-  empresa_externa BOOLEAN DEFAULT FALSE,
-  id_empresa INT,
-  id_usuario INT,
-  activo BOOLEAN DEFAULT TRUE,
-  FOREIGN KEY (id_empresa) REFERENCES empresas_contratistas(id) ON DELETE SET NULL,
-  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
+  nombre_guardia VARCHAR(100),
+  observaciones VARCHAR(100) NOT NULL,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  id_guardia INT,
+  FOREIGN KEY (id_guardia) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
 -- =============================================
--- 🔟 Tabla: TURNOS
--- =============================================
-CREATE TABLE turnos (
-  id SERIAL PRIMARY KEY,
-  id_personal INT NOT NULL,
-  fecha_inicio TIMESTAMP NOT NULL,
-  fecha_fin TIMESTAMP NOT NULL,
-  tipo_turno VARCHAR(30) CHECK (tipo_turno IN ('mañana', 'tarde', 'noche', 'especial')) NOT NULL,
-  FOREIGN KEY (id_personal) REFERENCES personal_interno(id) ON DELETE CASCADE
-);
-
--- =============================================
--- 11️⃣ Tabla: ASISTENCIAS
--- =============================================
-CREATE TABLE asistencias (
-  id SERIAL PRIMARY KEY,
-  id_personal INT NOT NULL,
-  fecha DATE DEFAULT CURRENT_DATE,
-  hora_entrada TIME,
-  hora_salida TIME,
-  observacion TEXT,
-  presente BOOLEAN DEFAULT TRUE,
-  FOREIGN KEY (id_personal) REFERENCES personal_interno(id) ON DELETE CASCADE
-);
-
--- =============================================
--- 🧾 TRIGGER DE AUDITORÍA
+-- 12️⃣ TABLA: AUDITORÍA
 -- =============================================
 CREATE TABLE auditoria (
   id SERIAL PRIMARY KEY,
@@ -175,6 +187,9 @@ CREATE TABLE auditoria (
   fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- =============================================
+-- 🧠 FUNCIONES Y TRIGGERS
+-- =============================================
 CREATE OR REPLACE FUNCTION log_auditoria()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -186,32 +201,122 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_auditoria_ingresos
 AFTER INSERT ON registros_ingreso
-FOR EACH ROW EXECUTE FUNCTION log_auditoria();
+FOR EACH ROW
+EXECUTE FUNCTION log_auditoria();
+
+CREATE OR REPLACE FUNCTION set_fecha_termino_empresa()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.activa = FALSE AND OLD.activa = TRUE THEN
+    NEW.fecha_termino := CURRENT_TIMESTAMP;
+  ELSIF NEW.activa = TRUE AND OLD.activa = FALSE THEN
+    NEW.fecha_termino := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_fecha_termino_empresa
+BEFORE UPDATE ON empresas_contratistas
+FOR EACH ROW
+EXECUTE FUNCTION set_fecha_termino_empresa();
+
+CREATE OR REPLACE FUNCTION set_fecha_termino_personal()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.activo = FALSE AND OLD.activo = TRUE THEN
+    NEW.fecha_termino := CURRENT_TIMESTAMP;
+  ELSIF NEW.activo = TRUE AND OLD.activo = FALSE THEN
+    NEW.fecha_termino := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_fecha_termino_personal
+BEFORE UPDATE ON personal_interno
+FOR EACH ROW
+EXECUTE FUNCTION set_fecha_termino_personal();
 
 -- =============================================
--- ⚡ ÍNDICES CLAVE
+-- ⚡ ÍNDICES
 -- =============================================
+CREATE INDEX idx_casas_numero ON casas (numero);
 CREATE INDEX idx_visitas_codigo_qr ON visitas (codigo_qr);
-CREATE INDEX idx_casas_locatario ON casas (id_locatario);
 CREATE INDEX idx_vehiculos_casa ON vehiculos (id_casa);
 CREATE INDEX idx_registros_guardia ON registros_ingreso (id_guardia);
+CREATE INDEX idx_registros_fecha ON registros_ingreso (fecha_hora_ingreso);
 CREATE INDEX idx_personal_empresa ON personal_interno (id_empresa);
-CREATE INDEX idx_turnos_personal ON turnos (id_personal);
 
 -- =============================================
--- 🌱 DATOS DE EJEMPLO
+-- 📊 ESQUEMA ANALÍTICO
 -- =============================================
+CREATE SCHEMA IF NOT EXISTS analytics;
+SET search_path TO analytics, public;
 
-ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_rut_check;
+CREATE TABLE IF NOT EXISTS dim_tiempo (
+  id SERIAL PRIMARY KEY,
+  fecha DATE UNIQUE NOT NULL,
+  anio INT NOT NULL,
+  mes INT NOT NULL,
+  dia INT NOT NULL,
+  nombre_dia VARCHAR(15),
+  nombre_mes VARCHAR(15)
+);
 
-ALTER TABLE usuarios
-ADD CONSTRAINT usuarios_rut_check
-CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$');
+INSERT INTO dim_tiempo (fecha, anio, mes, dia, nombre_dia, nombre_mes)
+SELECT d::date,
+       EXTRACT(YEAR FROM d)::int,
+       EXTRACT(MONTH FROM d)::int,
+       EXTRACT(DAY FROM d)::int,
+       TO_CHAR(d, 'TMDay'),
+       TO_CHAR(d, 'TMMonth')
+FROM generate_series('2020-01-01'::date, '2035-12-31'::date, '1 day') AS d
+ON CONFLICT (fecha) DO NOTHING;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS hechos_ingresos AS
+SELECT 
+  r.id AS id_registro,
+  r.tipo_registro,
+  r.observacion,
+  r.fecha_hora_ingreso,
+  r.fecha_hora_salida,
+  r.patente,
+  r.tipo_vehiculo,
+  EXTRACT(EPOCH FROM (r.fecha_hora_salida - r.fecha_hora_ingreso))/60 AS minutos_estadia,
+  u_guardia.nombre AS guardia,
+  u_guardia.rol AS rol_guardia,
+  c.direccion AS casa,
+  v.nombre AS visitante,
+  v.rut AS rut_visita,
+  e.nombre_empresa AS empresa,
+  p.nombre AS trabajador_interno,
+  DATE(r.fecha_hora_ingreso) AS fecha_registro,
+  DATE_PART('hour', r.fecha_hora_ingreso) AS hora_ingreso,
+  DATE_PART('hour', r.fecha_hora_salida) AS hora_salida
+FROM public.registros_ingreso r
+LEFT JOIN public.visitas v ON v.id = r.id_visita
+LEFT JOIN public.usuarios u_guardia ON u_guardia.id = r.id_guardia
+LEFT JOIN public.casas c ON c.id = v.id_casa
+LEFT JOIN public.personal_interno p ON p.id = r.id_personal_interno
+LEFT JOIN public.empresas_contratistas e ON e.id = p.id_empresa;
+
+CREATE INDEX IF NOT EXISTS idx_hechos_tipo_fecha 
+ON hechos_ingresos (tipo_registro, fecha_registro);
+
+CREATE OR REPLACE FUNCTION refresh_hechos_ingresos()
+RETURNS void AS $$
+BEGIN
+  REFRESH MATERIALIZED VIEW CONCURRENTLY analytics.hechos_ingresos;
+END;
+$$ LANGUAGE plpgsql;
+
+
 
 
 INSERT INTO usuarios(nombre, rut, email, password, rol)
 VALUES
-('Usuario', '22222222-7', 'guardia@correo.cl', 
+('Usuario', '22222222-7', 'usuario@correo.cl', 
 '$2b$10$a.cvUAhtIbH2xHKOYU.0mOhwLAz35KRXTj.0uBIr43K.xJL1ifFju', 'guardia');
 
 INSERT INTO usuarios (nombre, rut, email, password, rol)
@@ -219,42 +324,3 @@ VALUES
 ('Admin', '11111111-1', 'admin@correo.cl', 
 '$2b$10$LpTPgqRoqgn/6p36sixWCu2TWR6quRN.NbZDTKE1OJQl7Fv7JO.Sy', 'administrador');
 
--- Casa
-INSERT INTO casas (direccion, id_locatario)
-VALUES ('Pasaje Ancahue 210', 3);
-
--- Vehículos
-INSERT INTO vehiculos (patente, marca, modelo, color, id_casa, id_locatario)
-VALUES
-('5678-SD', 'Toyota', 'Yaris', 'Blanco', 1, 3),
-('5467-KJ', 'Kia', 'Rio', 'Azul', 1, 3);
-
--- Integrantes
-INSERT INTO integrantes (nombre, parentesco, id_locatario, id_casa)
-VALUES
-('Matías Farías', 'Hijo', 3, 1),
-('Fernanda Soto', 'Esposa', 3, 1);
-
--- Contratista
-INSERT INTO empresas_contratistas (nombre_empresa, rubro, telefono, email)
-VALUES ('CleanCondo', 'Aseo', '+56912345678', 'contacto@cleancondo.cl');
-
--- Personal interno
-INSERT INTO personal_interno (nombre, rut, cargo, empresa_externa, id_empresa)
-VALUES ('Juan Pérez', '15.234.678-9', 'Aseo general', TRUE, 1);
-
--- Turno
-INSERT INTO turnos (id_personal, fecha_inicio, fecha_fin, tipo_turno)
-VALUES (1, '2025-10-05 07:00', '2025-10-05 15:00', 'mañana');
-
--- Asistencia
-INSERT INTO asistencias (id_personal, hora_entrada, hora_salida)
-VALUES (1, '07:05', '15:00');
-
--- Visita
-INSERT INTO visitas (nombre, rut, id_casa, autorizado_por, codigo_qr)
-VALUES ('Pedro Soto', '17.345.890-9', 1, 3, 'qr123abc');
-
--- Registro de ingreso de visita
-INSERT INTO registros_ingreso (id_visita, id_guardia)
-VALUES (1, 2);

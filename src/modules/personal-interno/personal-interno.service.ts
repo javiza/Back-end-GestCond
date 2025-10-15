@@ -4,81 +4,51 @@ import { Repository } from 'typeorm';
 import { PersonalInterno } from './personal-interno.entity';
 import { CreatePersonalInternoDto } from './dto/create-personal-interno.dto';
 import { UpdatePersonalInternoDto } from './dto/update-personal-interno.dto';
-import { EmpresaContratista } from '../empresas-contratistas/empresa-contratista.entity';
-import { Usuario } from '../usuarios/usuarios.entity';
 
 @Injectable()
 export class PersonalInternoService {
   constructor(
-    @InjectRepository(PersonalInterno) private readonly repo: Repository<PersonalInterno>,
-    @InjectRepository(EmpresaContratista) private readonly empresas: Repository<EmpresaContratista>,
-    @InjectRepository(Usuario) private readonly usuarios: Repository<Usuario>,
+    @InjectRepository(PersonalInterno)
+    private readonly repo: Repository<PersonalInterno>,
   ) {}
 
-  async create(dto: CreatePersonalInternoDto) {
-    const empresa = dto.id_empresa
-  ? await this.empresas.findOne({ where: { id: dto.id_empresa } })
-  : undefined;
-    if (!empresa) {
-      throw new NotFoundException('Empresa contratista no encontrada');
-    }
-
-    const usuario = dto.id_usuario
-      ? await this.usuarios.findOne({ where: { id: dto.id_usuario } })
-      : undefined;
-    if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-    
-    const p = this.repo.create({
-      nombre: dto.nombre, cargo: dto.cargo, rut: dto.rut,
-      empresa_externa: dto.empresa_externa ?? false,
-      empresa, usuario
+  findAll() {
+    return this.repo.find({
+      relations: ['empresa', 'administrador'],
+      order: { id: 'DESC' },
     });
-    return this.repo.save(p);
   }
 
-  findAll() { return this.repo.find({ relations: ['empresa','usuario'] }); }
-
   async findOne(id: number) {
-    const p = await this.repo.findOne({ where: { id }, relations: ['empresa','usuario'] });
-    if (!p) {
+    const persona = await this.repo.findOne({
+      where: { id },
+      relations: ['empresa', 'administrador'],
+    });
+    if (!persona) {
       throw new NotFoundException('Personal no encontrado');
     }
-    return p;
+    return persona;
+  }
+
+  async create(dto: CreatePersonalInternoDto) {
+    const nuevo = this.repo.create(dto);
+    return await this.repo.save(nuevo);
   }
 
   async update(id: number, dto: UpdatePersonalInternoDto) {
-    const p = await this.findOne(id);
-    if (dto.id_empresa !== undefined) {
-      if (dto.id_empresa === null as any) {
-        p.empresa = undefined;
-      } else {
-              const e = await this.empresas.findOne({ where: { id: dto.id_empresa } });
-              if (!e) {
-                throw new NotFoundException('Empresa no encontrada');
-              }
-              p.empresa = e;
-            }
-    }
-    if (dto.id_usuario !== undefined) {
-      if (dto.id_usuario === null as any) {
-        p.usuario = undefined;
-      } else {
-              const u = await this.usuarios.findOne({ where: { id: dto.id_usuario } });
-              if (!u) {
-                throw new NotFoundException('Usuario no encontrado');
-              }
-              p.usuario = u;
-            }
-    }
-    Object.assign(p, dto);
-    return this.repo.save(p);
+    const persona = await this.findOne(id);
+    Object.assign(persona, dto);
+    return await this.repo.save(persona);
+  }
+
+  async toggleActivo(id: number, activo: boolean) {
+    const persona = await this.findOne(id);
+    persona.activo = activo;
+    return await this.repo.save(persona);
   }
 
   async remove(id: number) {
-    const p = await this.findOne(id);
-    await this.repo.remove(p);
-    return { deleted: true };
+    const persona = await this.findOne(id);
+    return await this.repo.remove(persona);
   }
 }

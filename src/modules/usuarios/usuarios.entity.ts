@@ -4,9 +4,11 @@ import {
   Column,
   CreateDateColumn,
   OneToMany,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 
-
+import { Casa } from '../casas/casa.entity';
 // Enum para reflejar el CHECK de la base de datos
 export enum RolUsuario {
   ADMIN = 'administrador',
@@ -45,6 +47,9 @@ rol: RolUsuario;
 
   @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp' })
   fecha_creacion: Date;
-
+  
+@ManyToOne(() => Casa, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'id_casa' })
+  casa?: Casa;
  
 }

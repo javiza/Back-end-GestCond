@@ -1,10 +1,39 @@
-import { IsInt, IsNotEmpty, IsString, Matches } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsNotEmpty,
+  IsString,
+  Matches,
+  IsInt,
+  Length,
+} from 'class-validator';
 
 export class CreateVisitaDto {
-  @IsString() @IsNotEmpty() nombre: string;
-  @IsString() @Matches(/^[0-9]{1,2}\.?[0-9]{3}\.?[0-9]{3}-[0-9kK]$/) rut: string;
-  @IsInt() @Type(() => Number) id_casa: number;
-  @IsInt() @Type(() => Number) autorizado_por: number;
-  @IsString() @IsNotEmpty() codigo_qr: string;
+  @ApiProperty({ example: 'Pedro Morales', description: 'Nombre del visitante' })
+  @IsNotEmpty()
+  @IsString()
+  @Length(3, 100)
+  nombre: string;
+
+  @ApiProperty({ example: '12345678-9', description: 'RUT del visitante' })
+  @IsNotEmpty()
+  @Matches(/^[0-9]{7,8}-[0-9kK]$/, {
+    message: 'El RUT debe tener formato válido, ej: 12345678-9',
+  })
+  rut: string;
+
+  @ApiProperty({ example: 5, description: 'ID de la casa visitada' })
+  @IsInt()
+  id_casa: number;
+
+  @ApiProperty({ example: 2, description: 'ID del locatario que autoriza la visita' })
+  @IsInt()
+  autorizado_por: number;
+
+  @ApiProperty({
+    example: 'QR-ABCD1234',
+    description: 'Código QR único generado para la visita',
+  })
+  @IsNotEmpty()
+  @IsString()
+  codigo_qr: string;
 }

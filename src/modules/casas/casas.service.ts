@@ -4,54 +4,37 @@ import { Repository } from 'typeorm';
 import { Casa } from './casa.entity';
 import { CreateCasaDto } from './dto/create-casa.dto';
 import { UpdateCasaDto } from './dto/update-casa.dto';
-import { Usuario } from '../usuarios/usuarios.entity';
 
 @Injectable()
 export class CasasService {
   constructor(
-    @InjectRepository(Casa) private readonly repo: Repository<Casa>,
-    @InjectRepository(Usuario) private readonly usuarios: Repository<Usuario>,
+    @InjectRepository(Casa)
+    private readonly repo: Repository<Casa>,
   ) {}
 
-  async create(dto: CreateCasaDto) {
-    const loc = await this.usuarios.findOne({ where: { id: dto.id_locatario, rol: 'locatario' as any } });
-    if (!loc) {
-      throw new NotFoundException('Locatario no encontrado o no es rol locatario');
-    }
-    const casa = this.repo.create({ direccion: dto.direccion, locatario: loc });
-    return this.repo.save(casa);
-  }
-
   findAll() {
-    return this.repo.find({ relations: ['locatario'] });
+    return this.repo.find({ order: { id: 'ASC' } });
   }
 
   async findOne(id: number) {
-    const casa = await this.repo.findOne({ where: { id }, relations: ['locatario'] });
-    if (!casa) {
-      throw new NotFoundException('Casa no encontrada');
-    }
+    const casa = await this.repo.findOne({ where: { id } });
+    if (!casa) throw new NotFoundException('Casa no encontrada');
     return casa;
+  }
+
+  async create(dto: CreateCasaDto) {
+    const nueva = this.repo.create(dto);
+    return this.repo.save(nueva);
   }
 
   async update(id: number, dto: UpdateCasaDto) {
     const casa = await this.findOne(id);
-    if (dto.id_locatario) {
-      const loc = await this.usuarios.findOne({ where: { id: dto.id_locatario, rol: 'locatario' as any } });
-      if (!loc) {
-        throw new NotFoundException('Locatario no encontrado o no es rol locatario');
-      }
-      casa.locatario = loc;
-    }
-    if (dto.direccion) {
-      casa.direccion = dto.direccion;
-    }
+    Object.assign(casa, dto);
     return this.repo.save(casa);
   }
 
   async remove(id: number) {
     const casa = await this.findOne(id);
-    await this.repo.remove(casa);
-    return { deleted: true };
+    return this.repo.remove(casa);
   }
 }

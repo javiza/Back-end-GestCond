@@ -1,10 +1,29 @@
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateIntegranteDto {
-  @IsString() @IsNotEmpty() nombre: string;
-  @IsString() @IsNotEmpty() parentesco: string;
+  @ApiProperty({ example: 'María López' })
+  @IsNotEmpty()
+  @IsString()
+  nombre: string;
 
-  @IsInt() @Type(() => Number) id_locatario: number;
-  @IsInt() @Type(() => Number) id_casa: number;
+  @ApiProperty({ example: 'Hija' })
+  @IsNotEmpty()
+  @IsString()
+  parentesco: string;
+
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  @Min(1)
+  id_locatario: number;
+
+  @ApiProperty({ example: 5 })
+  @IsInt()
+  @Min(1)
+  id_casa: number;
+
+  @ApiProperty({ example: 2, required: false })
+  @IsOptional()
+  @IsInt()
+  id_vehiculo?: number;
 }

@@ -4,72 +4,59 @@ import { Repository } from 'typeorm';
 import { Integrante } from './integrante.entity';
 import { CreateIntegranteDto } from './dto/create-integrante.dto';
 import { UpdateIntegranteDto } from './dto/update-integrante.dto';
-import { Usuario } from '../usuarios/usuarios.entity';
-import { Casa } from '../casas/casa.entity';
 
 @Injectable()
 export class IntegrantesService {
   constructor(
-    @InjectRepository(Integrante) private readonly repo: Repository<Integrante>,
-    @InjectRepository(Usuario) private readonly usuarios: Repository<Usuario>,
-    @InjectRepository(Casa) private readonly casas: Repository<Casa>,
+    @InjectRepository(Integrante)
+    private readonly repo: Repository<Integrante>,
   ) {}
 
-  async create(dto: CreateIntegranteDto) {
-    const loc = await this.usuarios.findOne({ where: { id: dto.id_locatario, rol: 'locatario' as any } });
-    if (!loc) {
-      throw new NotFoundException('Locatario no encontrado');
-    }
-
-    const casa = await this.casas.findOne({ where: { id: dto.id_casa } });
-    if (!casa) {
-      throw new NotFoundException('Casa no encontrada');
-    }
-
-    const integ = this.repo.create({ nombre: dto.nombre, parentesco: dto.parentesco, locatario: loc, casa });
-    return this.repo.save(integ);
+  async create(dto: CreateIntegranteDto): Promise<Integrante> {
+    const integrante = this.repo.create({
+      nombre: dto.nombre,
+      parentesco: dto.parentesco,
+      casa: { id: dto.id_casa } as any,
+      locatario: { id: dto.id_locatario } as any,
+      vehiculo: dto.id_vehiculo ? ({ id: dto.id_vehiculo } as any) : null,
+    });
+    return await this.repo.save(integrante);
   }
 
-  findAll() {
-    return this.repo.find({ relations: ['locatario','casa','vehiculos'] });
+  async findAll(): Promise<Integrante[]> {
+    return this.repo.find({
+      relations: ['locatario', 'casa', 'vehiculo'],
+      order: { id: 'ASC' },
+    });
   }
 
-  async findOne(id: number) {
-    const i = await this.repo.findOne({ where: { id }, relations: ['locatario','casa','vehiculos'] });
-    if (!i) {
+  async findOne(id: number): Promise<Integrante> {
+    const integrante = await this.repo.findOne({
+      where: { id },
+      relations: ['locatario', 'casa', 'vehiculo'],
+    });
+    if (!integrante) {
       throw new NotFoundException('Integrante no encontrado');
     }
-    return i;
+    return integrante;
   }
 
-  async update(id: number, dto: UpdateIntegranteDto) {
-    const i = await this.findOne(id);
-    if (dto.id_locatario) {
-      const loc = await this.usuarios.findOne({ where: { id: dto.id_locatario, rol: 'locatario' as any } });
-      if (!loc) {
-        throw new NotFoundException('Locatario no encontrado');
-      }
-      i.locatario = loc;
-    }
-    if (dto.id_casa) {
-      const casa = await this.casas.findOne({ where: { id: dto.id_casa } });
-      if (!casa) {
-        throw new NotFoundException('Casa no encontrada');
-      }
-      i.casa = casa;
-    }
-    if (dto.nombre) {
-      i.nombre = dto.nombre;
-    }
-    if (dto.parentesco) {
-      i.parentesco = dto.parentesco;
-    }
-    return this.repo.save(i);
+  async update(id: number, dto: UpdateIntegranteDto): Promise<Integrante> {
+    const integrante = await this.findOne(id);
+
+    Object.assign(integrante, {
+      nombre: dto.nombre ?? integrante.nombre,
+      parentesco: dto.parentesco ?? integrante.parentesco,
+      casa: dto.id_casa ? ({ id: dto.id_casa } as any) : integrante.casa,
+      locatario: dto.id_locatario ? ({ id: dto.id_locatario } as any) : integrante.locatario,
+      vehiculo: dto.id_vehiculo ? ({ id: dto.id_vehiculo } as any) : integrante.vehiculo,
+    });
+
+    return this.repo.save(integrante);
   }
 
-  async remove(id: number) {
-    const i = await this.findOne(id);
-    await this.repo.remove(i);
-    return { deleted: true };
+  async remove(id: number): Promise<void> {
+    const integrante = await this.findOne(id);
+    await this.repo.remove(integrante);
   }
 }

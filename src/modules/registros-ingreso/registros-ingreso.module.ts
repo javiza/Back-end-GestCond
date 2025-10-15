@@ -1,15 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RegistroIngreso } from './registro-ingreso.entity';
-import { RegistrosIngresoService } from './registros-ingreso.service';
-import { RegistrosIngresoController } from './registros-ingreso.controller';
-import { Visita } from '../visitas/visita.entity';
-import { Usuario } from '../usuarios/usuarios.entity';
+import { RegistrosIngresosService } from './registros-ingreso.service';
+import { RegistrosIngresosController } from './registros-ingreso.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([RegistroIngreso, Visita, Usuario])],
-  controllers: [RegistrosIngresoController],
-  providers: [RegistrosIngresoService],
-  exports: [RegistrosIngresoService],
+  imports: [TypeOrmModule.forFeature([RegistroIngreso])],
+  controllers: [RegistrosIngresosController],
+  providers: [RegistrosIngresosService],
 })
-export class RegistrosIngresoModule {}
+export class RegistrosIngresosModule {}

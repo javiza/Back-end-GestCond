@@ -7,29 +7,40 @@ import { UpdateEmpresaContratistaDto } from './dto/update-empresa-contratista.dt
 
 @Injectable()
 export class EmpresasContratistasService {
-  constructor(@InjectRepository(EmpresaContratista) private readonly repo: Repository<EmpresaContratista>) {}
+  constructor(
+    @InjectRepository(EmpresaContratista)
+    private readonly repo: Repository<EmpresaContratista>,
+  ) {}
 
-  create(dto: CreateEmpresaContratistaDto) {
-    return this.repo.save(this.repo.create(dto));
+  findAll() {
+    return this.repo.find({ order: { id: 'DESC' } });
   }
 
-  findAll() { return this.repo.find(); }
-
   async findOne(id: number) {
-    const e = await this.repo.findOne({ where: { id } });
-    if (!e) throw new NotFoundException('Empresa no encontrada');
-    return e;
+    const empresa = await this.repo.findOne({ where: { id } });
+    if (!empresa) throw new NotFoundException('Empresa no encontrada');
+    return empresa;
+  }
+
+  async create(dto: CreateEmpresaContratistaDto) {
+    const nueva = this.repo.create(dto);
+    return await this.repo.save(nueva);
   }
 
   async update(id: number, dto: UpdateEmpresaContratistaDto) {
-    const e = await this.findOne(id);
-    Object.assign(e, dto);
-    return this.repo.save(e);
+    const empresa = await this.findOne(id);
+    Object.assign(empresa, dto);
+    return await this.repo.save(empresa);
+  }
+
+  async toggleActiva(id: number, activa: boolean) {
+    const empresa = await this.findOne(id);
+    empresa.activa = activa;
+    return await this.repo.save(empresa);
   }
 
   async remove(id: number) {
-    const e = await this.findOne(id);
-    await this.repo.remove(e);
-    return { deleted: true };
+    const empresa = await this.findOne(id);
+    return await this.repo.remove(empresa);
   }
 }

@@ -1,12 +1,16 @@
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 export class CreateCasaDto {
-  @IsString()
+  @ApiProperty({ example: 'A-102', description: 'Número de la casa' })
   @IsNotEmpty()
-  direccion: string;
+  @IsString()
+  @Length(1, 6)
+  numero: string;
 
-  @IsInt()
-  @Type(() => Number)
-  id_locatario: number;
+  @ApiProperty({ example: 'Av. Central 456, Condominio Los Álamos' })
+  @IsNotEmpty()
+  @IsString()
+  @Length(5, 150)
+  direccion: string;
 }
