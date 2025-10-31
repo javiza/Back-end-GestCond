@@ -6,31 +6,43 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { RolUsuario } from '../usuarios/usuarios.entity';
 
-type Rol = 'administrador' | 'guardia' | 'locatario' ;
+
+//  Guard de Roles:
+//  Controla el acceso a rutas según el rol del usuario autenticado.
+//   Utiliza metadatos definidos con el decorador @Roles().
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const roles = this.reflector.getAllAndOverride<Rol[]>('roles', [
+    // Obtiene los roles requeridos definidos en el decorador @Roles()
+    const rolesRequeridos = this.reflector.getAllAndOverride<RolUsuario[]>('roles', [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (!roles) {
+    // Si la ruta no requiere roles específicos, se permite el acceso
+    if (!rolesRequeridos || rolesRequeridos.length === 0) {
       return true;
     }
 
     const { user } = context.switchToHttp().getRequest();
 
+    // Si no hay usuario en la request (token inválido o faltante)
     if (!user) {
-      throw new UnauthorizedException('Usuario no autenticado');
+      throw new UnauthorizedException('Usuario no autenticado.');
     }
 
-    if (!roles.includes(user.rol)) {
-      throw new ForbiddenException('No tienes permisos para esta acción');
+    // Verifica si el usuario tiene alguno de los roles permitidos
+    const tieneRolPermitido = rolesRequeridos.includes(user.rol);
+
+    if (!tieneRolPermitido) {
+      throw new ForbiddenException(
+        `Acceso denegado: se requiere rol ${rolesRequeridos.join(' o ')}`,
+      );
     }
 
     return true;

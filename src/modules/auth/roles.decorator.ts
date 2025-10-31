@@ -1,3 +1,12 @@
 import { SetMetadata } from '@nestjs/common';
+import { RolUsuario } from 'src/modules/usuarios/usuarios.entity';
 
-export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
+
+//  Decorador personalizado para restringir acceso según roles.
+
+//  Ejemplo
+//   @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.GUARDIA)
+//   async findAll() {...}
+ 
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles: RolUsuario[]) => SetMetadata(ROLES_KEY, roles);

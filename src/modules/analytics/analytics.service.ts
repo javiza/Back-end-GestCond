@@ -1,115 +1,85 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { FiltroAnalyticsDto } from './dto/filtro-analytics.dto';
+
+
+ // Servicio Analytics
+ // Consultas sobre la vista materializada analytics.hechos_ingresos.
 
 @Injectable()
 export class AnalyticsService {
   constructor(private readonly dataSource: DataSource) {}
 
-  // Visitas con mayor permanencia
-  async visitasMayorEstadia(limit = 20) {
-    return this.dataSource.query(`
-      SELECT 
-        visitante AS nombre,
-        rut_visita AS rut,
-        casa AS direccion_casa,
-        fecha_hora_ingreso,
-        fecha_hora_salida,
-        ROUND(minutos_estadia, 1) AS minutos_permanencia,
-        guardia
-      FROM analytics.hechos_ingresos
-      WHERE tipo_registro = 'visita'
-        AND minutos_estadia IS NOT NULL
-      ORDER BY minutos_estadia DESC
-      LIMIT $1
-    `, [limit]);
+  // Total de ingresos agrupados por tipo de visita
+  async ingresosPorTipoVisita(filtro: FiltroAnalyticsDto) {
+    try {
+      let query = `
+        SELECT tipo_visita, COUNT(*) AS total
+        FROM analytics.hechos_ingresos
+        WHERE 1=1
+      `;
+
+      if (filtro.desde) query += ` AND fecha_registro >= '${filtro.desde}'`;
+      if (filtro.hasta) query += ` AND fecha_registro <= '${filtro.hasta}'`;
+
+      query += ' GROUP BY tipo_visita ORDER BY total DESC;';
+
+      return await this.dataSource.query(query);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Error al obtener métricas por tipo de visita');
+    }
   }
 
-  // Guardia con mayor actividad en un mes (rondas + turnos)
-  async guardiasActividad(mes: number, anio: number) {
-    return this.dataSource.query(`
-      WITH actividad AS (
-        SELECT
-          u.id AS id_guardia,
-          u.nombre AS nombre_guardia,
-          u.rut AS rut_guardia,
-          COALESCE(rn.total_rondas, 0) AS rondas_totales,
-          COALESCE(ri.jornadas_dias, 0) AS jornadas_estimadas
-        FROM usuarios u
-        LEFT JOIN (
-          SELECT id_guardia, COUNT(*) AS total_rondas
-          FROM rondas
-          WHERE EXTRACT(YEAR FROM fecha_inicio) = $2
-            AND EXTRACT(MONTH FROM fecha_inicio) = $1
-          GROUP BY id_guardia
-        ) rn ON rn.id_guardia = u.id
-        LEFT JOIN (
-          SELECT id_guardia, COUNT(DISTINCT DATE(fecha_hora_ingreso)) AS jornadas_dias
-          FROM registros_ingreso
-          WHERE EXTRACT(YEAR FROM fecha_hora_ingreso) = $2
-            AND EXTRACT(MONTH FROM fecha_hora_ingreso) = $1
-          GROUP BY id_guardia
-        ) ri ON ri.id_guardia = u.id
-        WHERE u.rol = 'guardia'
-      )
-      SELECT *
-      FROM actividad
-      ORDER BY rondas_totales DESC, jornadas_estimadas DESC;
-    `, [mes, anio]);
+  // Promedio de minutos de estadía por tipo de vehículo
+  async promedioEstadiaPorVehiculo(filtro: FiltroAnalyticsDto) {
+    try {
+      let query = `
+        SELECT tipo_vehiculo, ROUND(AVG(minutos_estadia), 2) AS promedio_minutos
+        FROM analytics.hechos_ingresos
+        WHERE 1=1
+      `;
+
+      if (filtro.desde) query += ` AND fecha_registro >= '${filtro.desde}'`;
+      if (filtro.hasta) query += ` AND fecha_registro <= '${filtro.hasta}'`;
+
+      query += ' GROUP BY tipo_vehiculo ORDER BY promedio_minutos DESC;';
+
+      return await this.dataSource.query(query);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Error al obtener promedio de estadía');
+    }
   }
 
-  // Deliverys con permanencia > 20 minutos
-  async deliverysExcedidos() {
-    return this.dataSource.query(`
-      SELECT 
-        r.nombre,
-        r.rut,
-        e.nombre_empresa AS empresa,
-        r.patente,
-        r.tipo_vehiculo,
-        r.fecha_hora_ingreso,
-        r.fecha_hora_salida,
-        ROUND(EXTRACT(EPOCH FROM (r.fecha_hora_salida - r.fecha_hora_ingreso))/60, 1) AS minutos_permanencia
-      FROM registros_ingreso r
-      LEFT JOIN empresas_contratistas e ON e.id = r.id_personal_externo
-      WHERE r.tipo_registro = 'externo'
-        AND r.fecha_hora_salida IS NOT NULL
-        AND EXTRACT(EPOCH FROM (r.fecha_hora_salida - r.fecha_hora_ingreso))/60 > 20
-      ORDER BY minutos_permanencia DESC;
-    `);
+  // Tráfico por hora del día
+  async ingresosPorHora(filtro: FiltroAnalyticsDto) {
+    try {
+      let query = `
+        SELECT hora_ingreso, COUNT(*) AS total
+        FROM analytics.hechos_ingresos
+        WHERE 1=1
+      `;
+
+      if (filtro.desde) query += ` AND fecha_registro >= '${filtro.desde}'`;
+      if (filtro.hasta) query += ` AND fecha_registro <= '${filtro.hasta}'`;
+
+      query += ' GROUP BY hora_ingreso ORDER BY hora_ingreso ASC;';
+
+      return await this.dataSource.query(query);
+    } catch (error) {
+      throw new InternalServerErrorException('Error al obtener ingresos por hora');
+    }
   }
 
-  // Promedio mensual de ingresos por día de la semana
-  async flujoSemanal(mes: number, anio: number) {
-    return this.dataSource.query(`
-      WITH diarios AS (
-        SELECT
-          DATE(fecha_hora_ingreso) AS fecha,
-          EXTRACT(DOW FROM fecha_hora_ingreso)::int AS dow,
-          COUNT(*) AS ingresos_dia
-        FROM registros_ingreso
-        WHERE EXTRACT(YEAR FROM fecha_hora_ingreso) = $2
-          AND EXTRACT(MONTH FROM fecha_hora_ingreso) = $1
-        GROUP BY DATE(fecha_hora_ingreso), EXTRACT(DOW FROM fecha_hora_ingreso)
-      ),
-      promedios AS (
-        SELECT
-          dow,
-          CASE dow
-            WHEN 0 THEN 'Domingo'
-            WHEN 1 THEN 'Lunes'
-            WHEN 2 THEN 'Martes'
-            WHEN 3 THEN 'Miércoles'
-            WHEN 4 THEN 'Jueves'
-            WHEN 5 THEN 'Viernes'
-            WHEN 6 THEN 'Sábado'
-          END AS dia_semana,
-          ROUND(AVG(ingresos_dia), 2) AS promedio_diario
-        FROM diarios
-        GROUP BY dow
-      )
-      SELECT dia_semana, promedio_diario
-      FROM promedios
-      ORDER BY dow;
-    `, [mes, anio]);
+  // Refrescar la vista materializada
+  async refrescarVista() {
+    try {
+      await this.dataSource.query('REFRESH MATERIALIZED VIEW CONCURRENTLY analytics.hechos_ingresos;');
+      return { message: 'Vista materializada refrescada correctamente' };
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Error al refrescar la vista materializada');
+    }
   }
 }

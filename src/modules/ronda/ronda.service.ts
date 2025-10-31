@@ -12,30 +12,44 @@ export class RondasService {
     private readonly repo: Repository<Ronda>,
   ) {}
 
+  // Listar todas las rondas con su turno asociado
   findAll() {
     return this.repo.find({
-      relations: ['guardia'],
-      order: { fecha_inicio: 'DESC' },
+      relations: ['turno'], // ✅ coincide con la FK real
+      order: { fecha_hora_inicio: 'DESC' },
     });
   }
 
+  // Buscar una ronda por ID
   async findOne(id: number) {
-    const ronda = await this.repo.findOne({ where: { id }, relations: ['guardia'] });
+    const ronda = await this.repo.findOne({
+      where: { id },
+      relations: ['turno'],
+    });
     if (!ronda) throw new NotFoundException('Ronda no encontrada');
     return ronda;
   }
 
+  // Crear una nueva ronda
   create(dto: CreateRondaDto) {
-    const nueva = this.repo.create(dto);
+    const nueva = this.repo.create({
+      observacion_ronda: dto.observacion_ronda,
+      turno: dto.id_turno ? ({ id: dto.id_turno } as any) : undefined,
+    });
     return this.repo.save(nueva);
   }
 
+  // Actualizar una ronda existente
   async update(id: number, dto: UpdateRondaDto) {
     const ronda = await this.findOne(id);
-    Object.assign(ronda, dto);
+    Object.assign(ronda, {
+      observacion_ronda: dto.observacion_ronda ?? ronda.observacion_ronda,
+    });
+    if (dto.id_turno) ronda.turno = { id: dto.id_turno } as any;
     return this.repo.save(ronda);
   }
 
+  // Eliminar una ronda
   async remove(id: number) {
     const ronda = await this.findOne(id);
     return this.repo.remove(ronda);

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Vehiculo } from './vehiculo.entity';
@@ -12,53 +17,72 @@ export class VehiculosService {
     private readonly vehiculosRepo: Repository<Vehiculo>,
   ) {}
 
+  // Crear vehículo
   async create(dto: CreateVehiculoDto): Promise<Vehiculo> {
     try {
       const nuevo = this.vehiculosRepo.create({
+        nombre_dueño: dto.nombre_dueño,
         patente: dto.patente,
         marca: dto.marca,
         modelo: dto.modelo,
         color: dto.color,
-        tipo_vehiculo: dto.tipo_vehiculo as 'auto' | 'moto',
-        tipo_propietario: dto.tipo_propietario as 'locatario' | 'integrante',
+        tipo_vehiculo: dto.tipo_vehiculo,
         casa: { id: dto.id_casa } as any,
-        locatario: { id: dto.id_locatario } as any,
-        integrante: dto.id_integrante ? ({ id: dto.id_integrante } as any) : null,
       });
+
       return await this.vehiculosRepo.save(nuevo);
-    } catch (e) {
-      if (e.code === '23505') throw new ConflictException('Patente ya registrada');
-      throw e;
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException('La patente ya está registrada.');
+      }
+      throw new InternalServerErrorException('Error al registrar el vehículo.');
     }
   }
 
+  // Listar todos los vehículos
   async findAll(): Promise<Vehiculo[]> {
     return this.vehiculosRepo.find({
-      relations: ['casa', 'locatario', 'integrante'],
+      relations: ['casa'],
       order: { id: 'ASC' },
     });
   }
 
+  // Buscar vehículo por ID
   async findOne(id: number): Promise<Vehiculo> {
-    const v = await this.vehiculosRepo.findOne({
+    const vehiculo = await this.vehiculosRepo.findOne({
       where: { id },
-      relations: ['casa', 'locatario', 'integrante'],
+      relations: ['casa'],
     });
-    if (!v) throw new NotFoundException('Vehículo no encontrado');
-    return v;
+
+    if (!vehiculo) {
+      throw new NotFoundException(`Vehículo con ID ${id} no encontrado.`);
+    }
+
+    return vehiculo;
   }
 
+  // Actualizar vehículo
   async update(id: number, dto: UpdateVehiculoDto): Promise<Vehiculo> {
-    const v = await this.findOne(id);
-    Object.assign(v, dto);
-    if (dto.id_casa) v.casa = { id: dto.id_casa } as any;
-    if (dto.id_locatario) v.locatario = { id: dto.id_locatario } as any;
-    if (dto.id_integrante) v.integrante = { id: dto.id_integrante } as any;
-    return this.vehiculosRepo.save(v);
+    const vehiculo = await this.findOne(id);
+    Object.assign(vehiculo, dto);
+
+    if (dto.id_casa) {
+      vehiculo.casa = { id: dto.id_casa } as any;
+    }
+
+    try {
+      return await this.vehiculosRepo.save(vehiculo);
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException('La patente ya está registrada.');
+      }
+      throw new InternalServerErrorException('Error al actualizar el vehículo.');
+    }
   }
 
+  // Eliminar vehículo
   async remove(id: number): Promise<void> {
-    const v = await this.findOne(id);
-    await this.vehiculosRepo.remove(v);
+    const vehiculo = await this.findOne(id);
+    await this.vehiculosRepo.remove(vehiculo);
   }
 }

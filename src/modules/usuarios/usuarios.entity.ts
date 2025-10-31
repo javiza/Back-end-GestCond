@@ -3,15 +3,11 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  OneToMany,
-  JoinColumn,
-  ManyToOne,
 } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 
-import { Casa } from '../casas/casa.entity';
-// Enum para reflejar el CHECK de la base de datos
 export enum RolUsuario {
-  ADMIN = 'administrador',
+  ADMINISTRADOR = 'administrador',
   GUARDIA = 'guardia',
   LOCATARIO = 'locatario',
 }
@@ -21,9 +17,11 @@ export class Usuario {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'nombre', type: 'varchar', length: 100 })
+  @ApiProperty({ example: 'Juan Pérez' })
+  @Column({ type: 'varchar', length: 100 })
   nombre: string;
 
+  @ApiProperty({ example: '12345678-9' })
   @Column({
     unique: true,
     type: 'varchar',
@@ -32,24 +30,24 @@ export class Usuario {
   })
   rut: string;
 
+  @ApiProperty({ example: 'juan@correo.cl' })
   @Column({ unique: true, type: 'varchar', length: 100 })
   email: string;
 
-  // No se expone en queries normales (ej: find)
+  @ApiProperty({ example: 'Password123!' })
   @Column({ type: 'varchar', length: 255, select: false })
   password: string;
 
-  @Column({ type: 'varchar', length: 20 })
-rol: RolUsuario;
+  @ApiProperty({ example: 'guardia', enum: RolUsuario })
+  @Column({
+    type: 'enum',
+    enum: RolUsuario,
+  })
+  rol: RolUsuario;
 
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
   @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp' })
   fecha_creacion: Date;
-  
-@ManyToOne(() => Casa, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_casa' })
-  casa?: Casa;
- 
 }

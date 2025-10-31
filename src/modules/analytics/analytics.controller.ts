@@ -1,55 +1,45 @@
-import { 
-  Controller, 
-  Get, 
-  Query, 
-  UseGuards 
-} from '@nestjs/common';
+import { Controller, Get, Query, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
+import { FiltroAnalyticsDto } from './dto/filtro-analytics.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { RolUsuario } from '../usuarios/usuarios.entity';
 
-@ApiTags('analytics')
+@ApiTags('Analytics')
 @ApiBearerAuth()
-@Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('analytics')
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) {}
+  constructor(private readonly service: AnalyticsService) {}
 
-  // Visitas con mayor estadía
-  @Get('visitas-mayor-estadia')
-  @Roles('administrador', 'guardia')
-  @ApiOperation({ summary: 'Lista de visitas con mayor permanencia en el condominio' })
-  async getVisitasMayorEstadia(@Query('limit') limit = 20) {
-    return this.analyticsService.visitasMayorEstadia(Number(limit));
+  @Get('ingresos-por-tipo')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Métricas de ingresos agrupadas por tipo de visita' })
+  ingresosPorTipo(@Query() filtro: FiltroAnalyticsDto) {
+    return this.service.ingresosPorTipoVisita(filtro);
   }
 
-  // Guardia con mayor actividad (por mes)
-  @Get('guardias-actividad')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Actividad de guardias por mes (rondas y turnos)' })
-  @ApiQuery({ name: 'mes', required: true, example: 1 })
-  @ApiQuery({ name: 'anio', required: true, example: 2025 })
-  async getGuardiasActividad(@Query('mes') mes: number, @Query('anio') anio: number) {
-    return this.analyticsService.guardiasActividad(Number(mes), Number(anio));
+  @Get('promedio-estadia')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Promedio de minutos de estadía por tipo de vehículo' })
+  promedioEstadia(@Query() filtro: FiltroAnalyticsDto) {
+    return this.service.promedioEstadiaPorVehiculo(filtro);
   }
 
-  // Deliverys con permanencia mayor a 20 minutos
-  @Get('deliverys-excedidos')
-  @Roles('administrador', 'guardia')
-  @ApiOperation({ summary: 'Lista de deliverys con permanencia mayor a 20 minutos' })
-  async getDeliverysExcedidos() {
-    return this.analyticsService.deliverysExcedidos();
+  @Get('ingresos-por-hora')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Cantidad de ingresos agrupados por hora del día' })
+  ingresosPorHora(@Query() filtro: FiltroAnalyticsDto) {
+    return this.service.ingresosPorHora(filtro);
   }
 
-  //Flujo semanal promedio de ingresos
-  @Get('flujo-semanal')
-  @Roles('administrador', 'guardia')
-  @ApiOperation({ summary: 'Promedio mensual de ingresos por día de la semana' })
-  @ApiQuery({ name: 'mes', required: true, example: 1 })
-  @ApiQuery({ name: 'anio', required: true, example: 2025 })
-  async getFlujoSemanal(@Query('mes') mes: number, @Query('anio') anio: number) {
-    return this.analyticsService.flujoSemanal(Number(mes), Number(anio));
+  @Post('refrescar')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Refrescar la vista materializada de hechos_ingresos' })
+  @ApiResponse({ status: 200, description: 'Vista refrescada correctamente' })
+  refrescarVista() {
+    return this.service.refrescarVista();
   }
 }

@@ -7,12 +7,17 @@ import {
   Put,
   Delete,
   UseGuards,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { CasasService } from './casas.service';
 import { CreateCasaDto } from './dto/create-casa.dto';
@@ -20,6 +25,7 @@ import { UpdateCasaDto } from './dto/update-casa.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RolUsuario } from '../usuarios/usuarios.entity';
 
 @ApiTags('Casas')
 @ApiBearerAuth()
@@ -28,50 +34,60 @@ import { Roles } from '../auth/roles.decorator';
 export class CasasController {
   constructor(private readonly service: CasasService) {}
 
-  // GET /casas
+ 
   @Get()
-  @Roles('administrador', 'guardia')
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.GUARDIA)
   @ApiOperation({ summary: 'Listar todas las casas registradas' })
-  @ApiResponse({ status: 200, description: 'Casas listadas exitosamente.' })
+  @ApiResponse({ status: 200, description: 'Listado de casas obtenido correctamente.' })
   findAll() {
     return this.service.findAll();
   }
 
-  // GET /casas/:id
+ 
   @Get(':id')
-  @Roles('administrador', 'guardia')
-  @ApiOperation({ summary: 'Obtener una casa por su ID' })
-  @ApiResponse({ status: 200, description: 'Casa encontrada.' })
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.GUARDIA)
+  @ApiOperation({ summary: 'Obtener detalles de una casa específica' })
+  @ApiParam({ name: 'id', example: 1, description: 'ID numérico de la casa' })
+  @ApiResponse({ status: 200, description: 'Casa encontrada correctamente.' })
   @ApiResponse({ status: 404, description: 'Casa no encontrada.' })
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }
 
-  // POST /casas
+
   @Post()
-  @Roles('administrador')
+  @Roles(RolUsuario.ADMINISTRADOR)
   @ApiOperation({ summary: 'Registrar una nueva casa' })
+  @ApiBody({ type: CreateCasaDto })
   @ApiResponse({ status: 201, description: 'Casa creada exitosamente.' })
+  @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateCasaDto) {
     return this.service.create(dto);
   }
 
-  // PUT /casas/:id
+ 
   @Put(':id')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Actualizar una casa existente' })
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Actualizar los datos de una casa existente' })
+  @ApiParam({ name: 'id', example: 1 })
+  @ApiBody({ type: UpdateCasaDto })
   @ApiResponse({ status: 200, description: 'Casa actualizada correctamente.' })
   @ApiResponse({ status: 404, description: 'Casa no encontrada.' })
-  update(@Param('id') id: number, @Body() dto: UpdateCasaDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCasaDto) {
     return this.service.update(id, dto);
   }
 
-  // DELETE /casas/:id
+
   @Delete(':id')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Eliminar una casa del registro' })
-  @ApiResponse({ status: 200, description: 'Casa eliminada correctamente.' })
-  remove(@Param('id') id: number) {
-    return this.service.remove(id);
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({
+    summary: 'Eliminar una casa del registro (acción solo para administradores)',
+  })
+  @ApiParam({ name: 'id', example: 1 })
+  @ApiResponse({ status: 204, description: 'Casa eliminada correctamente.' })
+  @ApiResponse({ status: 404, description: 'Casa no encontrada.' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.service.remove(id);
   }
 }

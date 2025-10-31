@@ -3,10 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Ronda } from './ronda.entity';
 import { RondasService } from './ronda.service';
 import { RondasController } from './ronda.controller';
-import { Usuario } from '../usuarios/usuarios.entity';
+import { Turno } from '../turnos/turno.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Ronda, Usuario])],
+  imports: [TypeOrmModule.forFeature([Ronda, Turno])],
   controllers: [RondasController],
   providers: [RondasService],
   exports: [RondasService],

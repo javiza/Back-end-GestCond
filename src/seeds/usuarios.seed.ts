@@ -26,7 +26,7 @@ async function seed() {
         rut: '11111111-1',
         email: 'admin@correo.cl',
         password: await bcrypt.hash('Admin123!', 10),
-        rol: RolUsuario.ADMIN,
+        rol: RolUsuario.ADMINISTRADOR,
       }),
     );
     console.log('Usuario administrador creado');

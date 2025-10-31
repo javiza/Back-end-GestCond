@@ -1,27 +1,47 @@
-import { IsNotEmpty, IsOptional, IsBoolean, IsInt, IsString, Matches } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 export class CreatePersonalInternoDto {
-  @IsNotEmpty()
-  @IsString()
+  @ApiProperty({ example: 'Juan Sepúlveda', description: 'Nombre completo del trabajador interno' })
+  @IsNotEmpty({ message: 'El nombre es obligatorio' })
+  @IsString({ message: 'El nombre debe ser texto' })
+  @MaxLength(100)
   nombre: string;
 
-  @IsNotEmpty()
-  @Matches(/^[0-9]{7,8}-[0-9kK]$/, { message: 'RUT inválido. Ej: 12345678-9' })
+  @ApiProperty({ example: '12345678-9', description: 'RUT del trabajador' })
+  @IsNotEmpty({ message: 'El RUT es obligatorio' })
+  @Matches(/^[0-9]{7,8}-[0-9kK]$/, { message: 'Formato de RUT inválido. Ej: 12345678-9' })
   rut: string;
 
-  @IsNotEmpty()
-  @IsString()
+  @ApiProperty({ example: 'Técnico de mantenimiento', description: 'Cargo o función del trabajador' })
+  @IsNotEmpty({ message: 'El cargo es obligatorio' })
+  @IsString({ message: 'El cargo debe ser texto' })
+  @MaxLength(100)
   cargo: string;
 
+  @ApiProperty({
+    example: 1,
+    description: 'ID de la empresa contratista asociada (si aplica)',
+    required: false,
+  })
   @IsOptional()
-  @IsBoolean()
-  empresa_externa?: boolean;
+  @IsInt({ message: 'El id_empresa_contratista debe ser un número entero' })
+  id_empresa_contratista?: number;
 
+  @ApiProperty({
+    example: true,
+    description: 'Indica si el personal está activo',
+    required: false,
+  })
   @IsOptional()
-  @IsInt()
-  id_empresa?: number;
-
-  @IsOptional()
-  @IsInt()
-  id_administrador?: number;
+  @IsBoolean({ message: 'El campo activo debe ser booleano' })
+  activo?: boolean;
 }

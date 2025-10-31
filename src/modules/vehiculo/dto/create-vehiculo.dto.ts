@@ -10,7 +10,13 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateVehiculoDto {
-  @ApiProperty({ example: 'ABCD12' })
+  @ApiProperty({ example: 'Carlos Pérez', description: 'Nombre del dueño del vehículo' })
+  @IsNotEmpty()
+  @IsString()
+  @Length(3, 100)
+  nombre_dueño: string;
+
+  @ApiProperty({ example: 'ABCD12', description: 'Patente única del vehículo' })
   @IsNotEmpty()
   @IsString()
   @Length(5, 10)
@@ -32,25 +38,12 @@ export class CreateVehiculoDto {
   color?: string;
 
   @ApiProperty({ example: 'auto', enum: ['auto', 'moto'] })
+  @IsNotEmpty()
   @IsIn(['auto', 'moto'])
-  tipo_vehiculo: string;
+  tipo_vehiculo: 'auto' | 'moto';
 
-  @ApiProperty({ example: 'locatario', enum: ['locatario', 'integrante'] })
-  @IsIn(['locatario', 'integrante'])
-  tipo_propietario: string;
-
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 1, description: 'ID de la casa a la que pertenece el vehículo' })
   @IsInt()
   @Min(1)
   id_casa: number;
-
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  @Min(1)
-  id_locatario: number;
-
-  @ApiProperty({ example: 2, required: false })
-  @IsOptional()
-  @IsInt()
-  id_integrante?: number;
 }

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,87 +18,128 @@ export class UsuariosService {
     private readonly usuariosRepo: Repository<Usuario>,
   ) {}
 
-async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
-  const hashedPassword = await bcrypt.hash(createUsuarioDto.password, 10);
+  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+    try {
+      const hashedPassword = await bcrypt.hash(createUsuarioDto.password, 10);
 
-  const usuario = this.usuariosRepo.create({
-    ...createUsuarioDto,
-    password: hashedPassword,
-  });
+      const usuario = this.usuariosRepo.create({
+        ...createUsuarioDto,
+        password: hashedPassword,
+      });
 
-  try {
-    return await this.usuariosRepo.save(usuario);
-  } catch (e) {
-    if (e.code === '23505') {
-      throw new ConflictException('Email o RUT ya existen');
+      return await this.usuariosRepo.save(usuario);
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException({
+          statusCode: 409,
+          message: 'El email o RUT ya se encuentra registrado.',
+          error: 'Conflict',
+        });
+      }
+      throw new InternalServerErrorException(
+        'Error interno al crear el usuario.',
+      );
     }
-    throw e;
   }
-}
 
-async findAll(): Promise<Usuario[]> {
-  return this.usuariosRepo.find({
-    where: { activo: true },
-    select: ['id', 'nombre', 'rut', 'email', 'rol', 'activo', 'fecha_creacion'],
-  });
-}
-
+  async findAll(): Promise<Usuario[]> {
+    return await this.usuariosRepo.find({
+      where: { activo: true },
+      order: { id: 'ASC' },
+      select: [
+        'id',
+        'nombre',
+        'rut',
+        'email',
+        'rol',
+        'activo',
+        'fecha_creacion',
+      ],
+    });
+  }
 
   async findOne(id: number): Promise<Usuario> {
     const usuario = await this.usuariosRepo.findOne({
       where: { id },
-      select: ['id', 'nombre', 'rut', 'email', 'rol', 'fecha_creacion'],
+      select: ['id', 'nombre', 'rut', 'email', 'rol', 'activo', 'fecha_creacion'],
     });
+
     if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado');
+      throw new NotFoundException({
+        statusCode: 404,
+        message: `Usuario con ID ${id} no encontrado.`,
+      });
     }
+
     return usuario;
   }
 
   async findByEmail(email: string): Promise<Usuario | null> {
-    return this.usuariosRepo.findOne({
+    return await this.usuariosRepo.findOne({
       where: { email },
       select: [
         'id',
         'nombre',
         'rut',
         'email',
-        'password', // necesario para login
+        'password', // necesario para validación de login
         'rol',
         'activo',
       ],
     });
   }
 
-  async update(id: number, updateUsuarioDto: UpdateUsuarioDto): Promise<Usuario> {
-  const usuario = await this.usuariosRepo.findOne({ where: { id } });
-  if (!usuario) {
-    throw new NotFoundException('Usuario no encontrado');
-  }
-
-  Object.assign(usuario, updateUsuarioDto);
-
-  if (updateUsuarioDto.password) {
-    usuario.password = await bcrypt.hash(updateUsuarioDto.password, 10);
-  }
-
-  try {
-    return await this.usuariosRepo.save(usuario);
-  } catch (e) {
-    if (e.code === '23505') {
-      throw new ConflictException('Email o RUT ya existen');
+  //   Actualizar un usuario existente con validación de duplicados.
+  
+  async update(
+    id: number,
+    updateUsuarioDto: UpdateUsuarioDto,
+  ): Promise<Usuario> {
+    const usuario = await this.usuariosRepo.findOne({ where: { id } });
+    if (!usuario) {
+      throw new NotFoundException({
+        statusCode: 404,
+        message: `Usuario con ID ${id} no encontrado.`,
+      });
     }
-    throw e;
+
+    Object.assign(usuario, updateUsuarioDto);
+
+    if (updateUsuarioDto.password) {
+      usuario.password = await bcrypt.hash(updateUsuarioDto.password, 10);
+    }
+
+    try {
+      return await this.usuariosRepo.save(usuario);
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException({
+          statusCode: 409,
+          message: 'El email o RUT ya se encuentra registrado.',
+          error: 'Conflict',
+        });
+      }
+      throw new InternalServerErrorException(
+        'Error interno al actualizar el usuario.',
+      );
+    }
   }
-}
 
-
+  
+   //Borrado lógico: desactiva el usuario (no elimina de BD).
+   
   async remove(id: number): Promise<Usuario> {
     const usuario = await this.usuariosRepo.findOne({ where: { id } });
     if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado');
+      throw new NotFoundException({
+        statusCode: 404,
+        message: `Usuario con ID ${id} no encontrado.`,
+      });
     }
-    usuario.activo = false;
-    return this.usuariosRepo.save(usuario);
+
+    await this.usuariosRepo.update(id, { activo: false });
+
+    // Devolver estado actualizado sin nueva consulta
+    return { ...usuario, activo: false };
   }
 }

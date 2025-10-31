@@ -1,29 +1,28 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Usuario } from '../usuarios/usuarios.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import { Residente } from '../residentes/residente.entity';
 import { Vehiculo } from '../vehiculo/vehiculo.entity';
-import { Integrante } from '../integrantes/integrante.entity';
-import { Visita } from '../visitas/visita.entity';
 
+  // Entidad: Casa
 @Entity('casas')
 export class Casa {
+  @ApiProperty({ example: 1, description: 'Identificador único de la casa' })
   @PrimaryGeneratedColumn()
   id: number;
 
+  @ApiProperty({ example: 'A-102', description: 'Número único de la casa (ej. A-102)' })
   @Column({ type: 'varchar', length: 6, unique: true })
   numero: string;
 
+  @ApiProperty({ example: 'Av. Central 456, Condominio Los Álamos', description: 'Dirección completa de la casa' })
   @Column({ type: 'varchar', length: 150 })
   direccion: string;
 
-  @OneToMany(() => Usuario, (usuario) => usuario.id)
-  usuarios: Usuario[];
 
-  @OneToMany(() => Vehiculo, (vehiculo) => vehiculo.id)
+
+  @OneToMany(() => Residente, (residente) => residente.casa)
+  residentes: Residente[];
+
+  @OneToMany(() => Vehiculo, (vehiculo) => vehiculo.casa)
   vehiculos: Vehiculo[];
-
-  @OneToMany(() => Integrante, (integrante) => integrante.id)
-  integrantes: Integrante[];
-
-  @OneToMany(() => Visita, (visita) => visita.id)
-  visitas: Visita[];
 }

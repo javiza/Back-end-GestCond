@@ -1,20 +1,10 @@
-import {
-  Controller,
-  Get,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Get, Param, Query, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuditoriaService } from './auditoria.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RolUsuario } from '../usuarios/usuarios.entity';
 
 @ApiTags('Auditoría')
 @ApiBearerAuth()
@@ -23,54 +13,30 @@ import { Roles } from '../auth/roles.decorator';
 export class AuditoriaController {
   constructor(private readonly service: AuditoriaService) {}
 
-  //  GET /auditoria
   @Get()
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Listar todos los registros de auditoría' })
-  @ApiResponse({
-    status: 200,
-    description: 'Registros de auditoría listados correctamente.',
-  })
-  findAll() {
-    return this.service.findAll();
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Listar todos los registros de auditoría (con filtros opcionales)' })
+  @ApiResponse({ status: 200, description: 'Listado de auditorías obtenido exitosamente' })
+  findAll(
+    @Query('tabla') tabla?: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+  ) {
+    return this.service.findAll({ tabla, desde, hasta });
   }
 
-  //  GET /auditoria/tabla/:tabla
-  @Get('tabla/:tabla')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Filtrar auditoría por tabla afectada' })
-  @ApiParam({ name: 'tabla', example: 'registros_ingreso' })
-  @ApiResponse({
-    status: 200,
-    description: 'Filtrado por tabla completado correctamente.',
-  })
-  findByTable(@Param('tabla') tabla: string) {
-    return this.service.findByTable(tabla);
+  @Get(':id')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Obtener un registro de auditoría por ID' })
+  @ApiResponse({ status: 200, description: 'Registro encontrado' })
+  findOne(@Param('id') id: number) {
+    return this.service.findOne(id);
   }
 
-  //  GET /auditoria/accion/:accion
-  @Get('accion/:accion')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Filtrar auditoría por tipo de acción (INSERT, UPDATE, DELETE)' })
-  @ApiParam({ name: 'accion', example: 'INSERT' })
-  @ApiResponse({
-    status: 200,
-    description: 'Filtrado por acción completado correctamente.',
-  })
-  findByAction(@Param('accion') accion: string) {
-    return this.service.findByAction(accion);
-  }
-
-  //  GET /auditoria/usuario/:id
-  @Get('usuario/:id')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Filtrar auditoría por usuario responsable' })
-  @ApiParam({ name: 'id', example: 3 })
-  @ApiResponse({
-    status: 200,
-    description: 'Filtrado por usuario completado correctamente.',
-  })
-  findByUser(@Param('id') id: number) {
-    return this.service.findByUser(id);
+  @Delete('limpiar/:fecha')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Eliminar registros de auditoría anteriores a una fecha' })
+  clear(@Param('fecha') fecha: string) {
+    return this.service.clearOld(fecha);
   }
 }

@@ -3,10 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Auditoria } from './auditoria.entity';
 import { AuditoriaService } from './auditoria.service';
 import { AuditoriaController } from './auditoria.controller';
-import { Usuario } from '../usuarios/usuarios.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Auditoria, Usuario])],
+  imports: [TypeOrmModule.forFeature([Auditoria])],
   controllers: [AuditoriaController],
   providers: [AuditoriaService],
   exports: [AuditoriaService],

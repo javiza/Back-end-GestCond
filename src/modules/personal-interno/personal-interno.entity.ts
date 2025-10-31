@@ -6,44 +6,41 @@ import {
   JoinColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { EmpresaContratista } from '../empresas-contratistas/empresa-contratista.entity';
-import { Usuario } from '../usuarios/usuarios.entity';
+import { EmpresaContratista } from './../empresas-contratistas/empresa-contratista.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('personal_interno')
 export class PersonalInterno {
   @PrimaryGeneratedColumn()
+  @ApiProperty({ example: 1 })
   id: number;
 
+  @ApiProperty({ example: 'Juan Sepúlveda' })
   @Column({ type: 'varchar', length: 100 })
   nombre: string;
 
-  @Column({
-    type: 'varchar',
-    length: 12,
-    unique: true,
-  })
+  @ApiProperty({ example: '12345678-9' })
+  @Column({ type: 'varchar', length: 12, unique: true })
   rut: string;
 
+  @ApiProperty({ example: 'Técnico de mantenimiento' })
   @Column({ type: 'varchar', length: 100 })
   cargo: string;
 
-  @Column({ type: 'boolean', default: false })
-  empresa_externa: boolean;
-
-  @ManyToOne(() => EmpresaContratista, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_empresa' })
-  empresa: EmpresaContratista;
-
-  @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_administrador' })
-  administrador: Usuario;
-
+  @ApiProperty({ example: true })
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @ApiProperty({ example: '2025-10-31T20:00:00Z' })
+  @CreateDateColumn({ type: 'timestamp', name: 'fecha_ingreso', default: () => 'CURRENT_TIMESTAMP' })
   fecha_ingreso: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
-  fecha_termino: Date;
+  @ApiProperty({ example: null })
+  @Column({ type: 'timestamp', name: 'fecha_termino', nullable: true })
+  fecha_termino: Date | null;
+
+  @ManyToOne(() => EmpresaContratista, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'id_empresa_contratista' })
+  @ApiProperty({ type: () => EmpresaContratista, required: false })
+  empresa_contratista?: EmpresaContratista | null;
 }

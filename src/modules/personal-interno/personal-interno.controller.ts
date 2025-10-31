@@ -8,6 +8,9 @@ import {
   Patch,
   Delete,
   UseGuards,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { PersonalInternoService } from './personal-interno.service';
 import { CreatePersonalInternoDto } from './dto/create-personal-interno.dto';
@@ -15,61 +18,81 @@ import { UpdatePersonalInternoDto } from './dto/update-personal-interno.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { RolUsuario } from '../usuarios/usuarios.entity';
 
 @ApiTags('Personal Interno')
-@ApiBearerAuth() // Activa el botón Authorize en Swagger
-@UseGuards(JwtAuthGuard, RolesGuard) //  Aplica autenticación + control de rol
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('personal-interno')
 export class PersonalInternoController {
   constructor(private readonly service: PersonalInternoService) {}
 
-  // GET /personal-interno
+
   @Get()
-  @Roles('administrador')
+  @Roles(RolUsuario.ADMINISTRADOR)
   @ApiOperation({ summary: 'Listar todo el personal interno' })
-  @ApiResponse({ status: 200, description: 'Listado de personal interno obtenido correctamente.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Listado de personal interno obtenido correctamente.',
+  })
   findAll() {
     return this.service.findAll();
   }
 
-  // GET /personal-interno/:id
+
   @Get(':id')
-  @Roles('administrador')
+  @Roles(RolUsuario.ADMINISTRADOR)
   @ApiOperation({ summary: 'Obtener un registro de personal interno por ID' })
-  findOne(@Param('id') id: number) {
+  @ApiResponse({ status: 200, description: 'Registro encontrado.' })
+  @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }
 
-  // POST /personal-interno
+
   @Post()
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Crear nuevo registro de personal interno' })
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Registrar nuevo trabajador interno' })
+  @ApiResponse({ status: 201, description: 'Registro creado exitosamente.' })
   create(@Body() dto: CreatePersonalInternoDto) {
     return this.service.create(dto);
   }
 
-  // PUT /personal-interno/:id
+  
   @Put(':id')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Actualizar un registro de personal interno' })
-  update(@Param('id') id: number, @Body() dto: UpdatePersonalInternoDto) {
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Actualizar datos de un trabajador interno' })
+  @ApiResponse({ status: 200, description: 'Registro actualizado correctamente.' })
+  @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdatePersonalInternoDto) {
     return this.service.update(id, dto);
   }
 
-  //  PATCH /personal-interno/:id/activo/:estado
+ 
   @Patch(':id/activo/:estado')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Activar o desactivar personal interno' })
-  toggleActivo(@Param('id') id: number, @Param('estado') estado: string) {
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Activar o desactivar trabajador interno' })
+  @ApiResponse({ status: 200, description: 'Estado actualizado correctamente.' })
+  toggleActivo(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('estado') estado: string,
+  ) {
     return this.service.toggleActivo(id, estado === 'true');
   }
 
-  //  DELETE /personal-interno/:id
   @Delete(':id')
-  @Roles('administrador')
-  @ApiOperation({ summary: 'Eliminar registro de personal interno' })
-  remove(@Param('id') id: number) {
-    return this.service.remove(id);
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Eliminar trabajador interno' })
+  @ApiResponse({ status: 204, description: 'Registro eliminado correctamente.' })
+  @ApiResponse({ status: 404, description: 'Registro no encontrado.' })
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.service.remove(id);
   }
 }

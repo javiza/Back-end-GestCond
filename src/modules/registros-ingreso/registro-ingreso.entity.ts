@@ -4,70 +4,74 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Usuario } from '../usuarios/usuarios.entity';
-import { Visita } from '../visitas/visita.entity';
-import { PersonalInterno } from '../personal-interno/personal-interno.entity';
-import { EmpresaContratista } from '../empresas-contratistas/empresa-contratista.entity';
-import { Casa } from '../casas/casa.entity';
+import { AutorizacionQR } from '../autorizacion_qr/autorizacion_qr.entity';
 
 @Entity('registros_ingreso')
 export class RegistroIngreso {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // 🔹 Relación con casa
-  @ManyToOne(() => Casa, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_casa' })
-  casa: Casa;
+  // Relación con autorización QR (puede ser null)
+  @ManyToOne(() => AutorizacionQR, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'id_autorizacion_qr' })
+  autorizacionQR: AutorizacionQR | null;
 
-  // 🔹 Relación con visita
-  @ManyToOne(() => Visita, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_visita' })
-  visita: Visita;
-
-  // 🔹 Relación con personal interno
-  @ManyToOne(() => PersonalInterno, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_personal_interno' })
-  personalInterno: PersonalInterno;
-
-  // 🔹 Relación con empresa contratista (personal externo)
-  @ManyToOne(() => EmpresaContratista, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_personal_externo' })
-  personalExterno: EmpresaContratista;
-
-  // 🔹 Guardia responsable
+  // Guardia responsable
   @ManyToOne(() => Usuario, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_guardia' })
   guardia: Usuario;
 
-  // 🔹 Fechas
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_hora_ingreso: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
-  fecha_hora_salida: Date;
-
-  // 🔹 Tipo de registro
-  @Column({
-    type: 'varchar',
-    length: 20,
+  // Fechas
+  @CreateDateColumn({
+    name: 'fecha_hora_ingreso',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
   })
-  tipo_registro: 'visita' | 'interno' | 'externo';
+  fechaHoraIngreso: Date;
 
-  // 🔹 Datos adicionales
+  @Column({
+    name: 'fecha_hora_salida',
+    type: 'timestamp',
+    nullable: true,
+  })
+  fechaHoraSalida: Date | null;
+
+  // Datos de visitante / vehículo
   @Column({ type: 'varchar', length: 100, nullable: true })
-  nombre: string;
+  nombre: string | null;
 
   @Column({ type: 'varchar', length: 12, nullable: true })
-  rut: string;
-
-  @Column({ type: 'text' })
-  observacion: string;
+  rut: string | null;
 
   @Column({ type: 'varchar', length: 10, nullable: true })
-  patente: string;
+  patente: string | null;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
-  tipo_vehiculo: 'moto' | 'auto';
+  @Column({
+    name: 'tipo_vehiculo',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  tipoVehiculo: 'moto' | 'auto' | null;
+
+  // Persona que autorizó el ingreso
+  @Column({
+    name: 'autorizado_por',
+    type: 'varchar',
+    length: 100,
+    nullable: false,
+  })
+  autorizadoPor: string;
+
+  // Tipo de visita
+  @Column({
+    name: 'tipo_visita',
+    type: 'varchar',
+    length: 20,
+    nullable: false,
+  })
+  tipoVisita: 'visita' | 'delivery' | 'trabajador';
 }

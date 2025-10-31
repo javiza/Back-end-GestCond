@@ -5,27 +5,48 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Usuario } from '../usuarios/usuarios.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import { Turno } from '../turnos/turno.entity';
 
 @Entity('rondas')
 export class Ronda {
+  @ApiProperty({ example: 1, description: 'Identificador único de la ronda' })
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  nombre_guardia: string;
+  @ApiProperty({
+    example: 'Ronda completa sin novedades',
+    description: 'Observaciones registradas durante la ronda',
+  })
+  @Column({ name: 'observacion_ronda', type: 'text', nullable: false })
+  observacion_ronda: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  observaciones: string;
+  @ApiProperty({
+    example: '2025-10-31T22:15:00Z',
+    description: 'Fecha y hora de inicio de la ronda',
+  })
+  @CreateDateColumn({
+    name: 'fecha_hora_inicio',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  fecha_hora_inicio: Date;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_inicio: Date;
+  @ApiProperty({
+    example: '2025-10-31T22:45:00Z',
+    description: 'Fecha y hora de término de la ronda',
+  })
+  @UpdateDateColumn({
+    name: 'fecha_hora_termino',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  fecha_hora_termino: Date;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_termino: Date;
-
-  @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_guardia' })
-  guardia: Usuario;
+ 
+  @ManyToOne(() => Turno, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'id_turno' })
+  turno?: Turno;
 }

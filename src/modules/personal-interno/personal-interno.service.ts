@@ -12,40 +12,58 @@ export class PersonalInternoService {
     private readonly repo: Repository<PersonalInterno>,
   ) {}
 
+
   findAll() {
     return this.repo.find({
-      relations: ['empresa', 'administrador'],
+      relations: ['empresa_contratista'], 
       order: { id: 'DESC' },
     });
   }
 
+ 
   async findOne(id: number) {
     const persona = await this.repo.findOne({
       where: { id },
-      relations: ['empresa', 'administrador'],
+      relations: ['empresa_contratista'], 
     });
-    if (!persona) {
-      throw new NotFoundException('Personal no encontrado');
-    }
+
+    if (!persona) throw new NotFoundException('Personal no encontrado');
     return persona;
   }
 
+
   async create(dto: CreatePersonalInternoDto) {
-    const nuevo = this.repo.create(dto);
+    const nuevo = this.repo.create({
+      nombre: dto.nombre,
+      rut: dto.rut,
+      cargo: dto.cargo,
+      activo: dto.activo ?? true,
+      empresa_contratista: dto.id_empresa_contratista
+        ? ({ id: dto.id_empresa_contratista } as any)
+        : null,
+    });
     return await this.repo.save(nuevo);
   }
+
 
   async update(id: number, dto: UpdatePersonalInternoDto) {
     const persona = await this.findOne(id);
     Object.assign(persona, dto);
+
+    if (dto.id_empresa_contratista) {
+      persona.empresa_contratista = { id: dto.id_empresa_contratista } as any;
+    }
+
     return await this.repo.save(persona);
   }
 
+ 
   async toggleActivo(id: number, activo: boolean) {
     const persona = await this.findOne(id);
     persona.activo = activo;
     return await this.repo.save(persona);
   }
+
 
   async remove(id: number) {
     const persona = await this.findOne(id);
