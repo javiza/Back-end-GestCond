@@ -26,32 +26,58 @@ export class AutorizacionQRService {
 
   //  Crear una nueva autorización QR
   //  Emite un evento Kafka: AUTORIZACION_CREADA
-  async crear(dto: CrearAutorizacionDto) {
-    const usuario = dto.id_usuario
-      ? await this.usuariosRepo.findOne({ where: { id: dto.id_usuario } })
-      : null;
 
-    const entity = this.repo.create({
-      codigo_qr: dto.codigo_qr,
-      motivo: dto.motivo ?? null,
-      usuario: usuario ?? null,
-    });
+ async crear(dto: CrearAutorizacionDto) {
+  const usuario = dto.id_usuario
+    ? await this.usuariosRepo.findOne({ where: { id: dto.id_usuario } })
+    : null;
 
-    const saved = await this.repo.save(entity);
+  //  Agrego el campo faltante nombre_visita
+  const entity = this.repo.create({
+    codigo_qr: dto.codigo_qr,
+    nombre_visita: dto.nombre_visita, // importante
+    motivo: dto.motivo ?? null,
+    usuario: usuario ?? null,
+  });
 
-    // Emitir evento Kafka
-    this.kafka.emit(Topics.AUTORIZACION_CREADA, {
-      id_autorizacion: saved.id,
-      codigo_qr: saved.codigo_qr,
-      motivo: saved.motivo,
-      id_usuario: usuario?.id ?? null,
-      fecha_hora: saved.fecha_hora,
-    });
+  const saved = await this.repo.save(entity);
 
-    this.logger.log(`AUTORIZACION_CREADA → ${saved.codigo_qr}`);
+  // Emite el evento Kafka incluyendo nombre_visita
+  this.kafka.emit(Topics.AUTORIZACION_CREADA, {
+    id_autorizacion: saved.id,
+    codigo_qr: saved.codigo_qr,
+    nombre_visita: saved.nombre_visita, // agregarlo al evento
+    motivo: saved.motivo,
+    id_usuario: usuario?.id ?? null,
+    fecha_hora: saved.fecha_hora,
+  });
 
-    return saved;
+  this.logger.log(`AUTORIZACION_CREADA → ${saved.codigo_qr}`);
+
+  return saved;
+}
+// 📋 Obtener todas las visitas registradas (todas las autorizaciones QR)
+async findAll(): Promise<AutorizacionQR[]> {
+  return this.repo.find({
+    relations: ['usuario'],
+    order: { fecha_hora: 'DESC' },
+  });
+}
+
+// 🔍 Obtener todas las visitas registradas por un usuario específico
+async findByUsuario(id_usuario: number): Promise<AutorizacionQR[]> {
+  const usuario = await this.usuariosRepo.findOne({ where: { id: id_usuario } });
+
+  if (!usuario) {
+    throw new NotFoundException(`No se encontró el usuario con ID ${id_usuario}`);
   }
+
+  return this.repo.find({
+    where: { usuario: { id: id_usuario } },
+    relations: ['usuario'],
+    order: { fecha_hora: 'DESC' },
+  });
+}
 
   
   //  Validar un código QR escaneado por un guardia
@@ -79,6 +105,7 @@ export class AutorizacionQRService {
     this.kafka.emit(Topics.AUTORIZACION_VALIDADA, {
       id_autorizacion_qr: autorizacion.id,
       codigo_qr: autorizacion.codigo_qr,
+      nombre_visita: autorizacion.nombre_visita,
       tipo_visita: dto.tipo_visita,
       nombre: dto.nombre,
       rut: dto.rut ?? null,

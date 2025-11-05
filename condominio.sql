@@ -184,7 +184,7 @@ CREATE TABLE registros_ingreso (
   id_autorizacion_qr INT NULL,
   id_guardia INT NOT NULL,
   FOREIGN KEY (id_autorizacion_qr) REFERENCES autorizacion_qr(id) ON DELETE SET NULL,
-  FOREIGN KEY (id_guardia) REFERENCES guardias(id) ON DELETE CASCADE
+  FOREIGN KEY (id_guardia) REFERENCES (id) ON DELETE CASCADE
 );
 ALTER TABLE registros_ingreso DROP CONSTRAINT registros_ingreso_rut_key;
 
