@@ -35,7 +35,7 @@ import 'typeorm/driver/postgres/PostgresDriver';
       port: parseInt(process.env.DB_PORT || '5432', 10),
       username: process.env.DB_USERNAME || 'jona',
       password: process.env.DB_PASSWORD || '1234',
-      database: process.env.DB_DATABASE || 'condominio6',
+      database: process.env.DB_DATABASE || 'condominio7',
       autoLoadEntities: true,
       synchronize: false,
       logging: false,

@@ -9,7 +9,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Usuario } from '../usuarios/usuarios.entity';
 
-
 @Entity('autorizacion_qr')
 export class AutorizacionQR {
   @ApiProperty({ example: 1, description: 'Identificador único del registro de autorización QR.' })
@@ -22,6 +21,13 @@ export class AutorizacionQR {
   })
   @Column({ name: 'codigo_qr', type: 'varchar', length: 255, unique: true })
   codigo_qr: string;
+
+  @ApiProperty({
+    example: 'Juan Gómez',
+    description: 'Nombre de la persona o visita autorizada.',
+  })
+  @Column({ name: 'nombre_visita', type: 'varchar', length: 100, nullable: false })
+  nombre_visita: string;
 
   @ApiPropertyOptional({
     example: 'Ingreso autorizado para delivery',

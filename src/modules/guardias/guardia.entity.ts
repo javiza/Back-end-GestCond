@@ -11,9 +11,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Usuario } from '../usuarios/usuarios.entity';
 import { EmpresaContratista } from '../empresas-contratistas/empresa-contratista.entity';
 
-  // Entidad: Guardia
 @Index('idx_guardias_rut', ['rut'])
-@Index('idx_guardias_email', ['email'])
 @Entity('guardias')
 export class Guardia {
   @ApiProperty({ example: 1, description: 'Identificador único del guardia' })
@@ -30,36 +28,44 @@ export class Guardia {
     length: 12,
     unique: true,
     nullable: false,
-    comment: 'RUT chileno, validado con expresión regular en DTO',
+    comment: 'RUT chileno validado con expresión regular en DTO',
   })
   rut: string;
 
-  @ApiProperty({ example: 'carlos.perez@correo.cl', description: 'Correo del guardia' })
-  @Column({ type: 'varchar', length: 100, unique: true, nullable: false })
-  email: string;
+  @ApiPropertyOptional({
+    example: '+56912345678',
+    description: 'Teléfono del guardia (opcional)',
+  })
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  telefono?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'carlos.perez@correo.cl',
+    description: 'Correo electrónico del guardia (opcional)',
+  })
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  email?: string | null;
 
   @ApiProperty({ example: true, description: 'Indica si el guardia está activo en el sistema' })
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
-  @ApiProperty({ example: '2025-10-30T22:00:00.000Z', description: 'Fecha de creación automática' })
+  @ApiProperty({
+    example: '2025-11-04T15:00:00.000Z',
+    description: 'Fecha de creación automática del registro',
+  })
   @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp' })
   fecha_creacion: Date;
 
- 
-  @ApiPropertyOptional({
-    type: () => Usuario,
-    description: 'Usuario del sistema asociado al guardia (FK opcional)',
-  })
+  // FK opcional a usuarios (columna id_usuario NULLABLE en BD)
+  @ApiPropertyOptional({ type: () => Usuario })
   @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'id_usuario' })
-  usuario?: Usuario;
+  usuario?: Usuario | null;
 
-  @ApiPropertyOptional({
-    type: () => EmpresaContratista,
-    description: 'Empresa contratista a la que pertenece el guardia (FK opcional)',
-  })
+  // FK opcional a empresas_contratistas (columna id_empresa_contratista NULLABLE en BD)
+  @ApiPropertyOptional({ type: () => EmpresaContratista })
   @ManyToOne(() => EmpresaContratista, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'id_empresa_contratista' })
-  empresaContratista?: EmpresaContratista;
+  empresaContratista?: EmpresaContratista | null;
 }

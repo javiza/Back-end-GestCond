@@ -6,10 +6,11 @@ import {
   Matches,
   IsInt,
   Min,
+  Length,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-//DTO para crear un nuevo guardia en el sistema del condominio.
+// DTO para crear un nuevo guardia en el sistema del condominio.
 export class CreateGuardiaDto {
   @ApiProperty({
     example: 'Carlos Pérez',
@@ -29,17 +30,26 @@ export class CreateGuardiaDto {
   })
   rut: string;
 
-  @ApiProperty({
-    example: 'carlos.perez@correo.cl',
-    description: 'Correo electrónico del guardia',
+  @ApiPropertyOptional({
+    example: '+56912345678',
+    description: 'Teléfono de contacto del guardia (opcional)',
   })
+  @IsOptional()
+  @IsString({ message: 'El teléfono debe ser una cadena de texto.' })
+  @Length(8, 12, { message: 'El teléfono debe tener entre 8 y 12 caracteres.' })
+  telefono?: string;
+
+  @ApiPropertyOptional({
+    example: 'carlos.perez@correo.cl',
+    description: 'Correo electrónico del guardia (opcional)',
+  })
+  @IsOptional()
   @IsEmail({}, { message: 'Debe proporcionar un correo electrónico válido.' })
-  email: string;
+  email?: string;
 
   @ApiPropertyOptional({
     example: 1,
-    description:
-      'ID del usuario asociado (FK a tabla usuarios). Puede ser nulo.',
+    description: 'ID del usuario asociado (FK a tabla usuarios). Puede ser nulo.',
   })
   @IsOptional()
   @IsInt({ message: 'El id_usuario debe ser un número entero.' })
@@ -48,8 +58,7 @@ export class CreateGuardiaDto {
 
   @ApiPropertyOptional({
     example: 2,
-    description:
-      'ID de la empresa contratista a la que pertenece el guardia (FK).',
+    description: 'ID de la empresa contratista a la que pertenece el guardia (FK).',
   })
   @IsOptional()
   @IsInt({ message: 'El id_empresa_contratista debe ser un número entero.' })

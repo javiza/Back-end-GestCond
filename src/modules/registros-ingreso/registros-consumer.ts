@@ -14,35 +14,44 @@ export class RegistrosConsumer {
     private readonly repo: Repository<RegistroIngreso>,
   ) {}
 
-  //  Evento: autorización validada desde Kafka
+  // Evento: autorización validada desde Kafka
   @MessagePattern(Topics.AUTORIZACION_VALIDADA)
   async handleAutorizacionValidada(@Payload() message: any) {
     const data = message?.value ?? message;
 
     try {
       const entidad = this.repo.create({
-        nombre: data.nombre,
-        rut: data.rut,
-        patente: data.patente,
-        tipoVehiculo: data.tipo_vehiculo,   
-        autorizadoPor: data.autorizado_por, 
-        tipoVisita: data.tipo_visita,       
+        nombre: data.nombre?.trim() || null,
+        rut: data.rut
+          ? data.rut.replace(/\./g, '').replace(/[^0-9kK-]/g, '').toUpperCase()
+          : null,
+        patente: data.patente?.trim() || null,
+        tipoVehiculo: data.tipo_vehiculo?.trim() || null,
+        autorizadoPor: data.autorizado_por?.trim() || 'Desconocido',
+        lugarDestino: data.lugar_destino?.trim() || 'No especificado',
+        tipoVisita: data.tipo_visita || 'visita',
         fechaHoraIngreso: data.fecha_hora_ingreso
           ? new Date(data.fecha_hora_ingreso)
           : new Date(),
-        guardia: { id: Number(data.id_guardia) },
-        autorizacionQR: { id: Number(data.id_autorizacion_qr) },
+
+        // ✅ FK hacia guardias (tu tabla usa id_guardia)
+        guardia: { id: Number(data.id_guardia) || 1 } as any,
+
+        // Asociación con autorización QR (si aplica)
+        autorizacionQR: data.id_autorizacion_qr
+          ? ({ id: Number(data.id_autorizacion_qr) } as any)
+          : null,
       });
 
       const saved = await this.repo.save(entidad);
+
       this.logger.log(
-        ` Ingreso registrado correctamente (id=${saved.id}) por evento AUTORIZACION_VALIDADA`,
+        `Ingreso registrado correctamente (id=${saved.id}) por evento AUTORIZACION_VALIDADA (guardia_id=${data.id_guardia || 'N/A'})`,
       );
 
-      // emitir un evento Kafka para analytics o Spark
       // this.kafka.emit(Topics.INGRESO_REGISTRADO, { id_registro: saved.id });
     } catch (e) {
-      this.logger.error(` Error insertando registro: ${e?.message}`);
+      this.logger.error(`Error insertando registro: ${e?.message}`);
     }
   }
 
@@ -51,7 +60,7 @@ export class RegistrosConsumer {
   async handleAutorizacionRechazada(@Payload() message: any) {
     const data = message?.value ?? message;
     this.logger.warn(
-      `QR rechazado: ${data.codigo_qr} — motivo: ${data.motivo}`,
+      `QR rechazado: ${data.codigo_qr} — motivo: ${data.motivo || 'No especificado'}`,
     );
   }
 }

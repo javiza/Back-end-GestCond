@@ -25,9 +25,8 @@ export class EmpresaContratista {
   nombre_empresa: string;
 
   @ApiProperty({ example: '76.543.210-9', description: 'RUT de la empresa', required: false })
-  @Column({ type: 'varchar', length: 12, nullable: true })
-  rut?: string;
-
+@Column({ type: 'varchar', length: 12, nullable: true })
+rut: string | null;
   @ApiProperty({ example: 'Construcción y mantenimiento', description: 'Rubro o giro de la empresa', required: false })
   @Column({ type: 'varchar', length: 100, nullable: true })
   rubro?: string;

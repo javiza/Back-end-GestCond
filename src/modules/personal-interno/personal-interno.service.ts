@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import { PersonalInterno } from './personal-interno.entity';
 import { CreatePersonalInternoDto } from './dto/create-personal-interno.dto';
 import { UpdatePersonalInternoDto } from './dto/update-personal-interno.dto';
-
+import { EmpresaContratista } from '../empresas-contratistas/empresa-contratista.entity';
 @Injectable()
 export class PersonalInternoService {
   constructor(
     @InjectRepository(PersonalInterno)
     private readonly repo: Repository<PersonalInterno>,
+    @InjectRepository(EmpresaContratista)
+    private readonly empresaRepo: Repository<EmpresaContratista>,
   ) {}
 
 
@@ -32,18 +34,23 @@ export class PersonalInternoService {
   }
 
 
-  async create(dto: CreatePersonalInternoDto) {
-    const nuevo = this.repo.create({
-      nombre: dto.nombre,
-      rut: dto.rut,
-      cargo: dto.cargo,
-      activo: dto.activo ?? true,
-      empresa_contratista: dto.id_empresa_contratista
-        ? ({ id: dto.id_empresa_contratista } as any)
-        : null,
-    });
-    return await this.repo.save(nuevo);
-  }
+ async create(dto: CreatePersonalInternoDto) {
+  const nuevo = this.repo.create({
+    nombre: dto.nombre.trim(),
+    rut: dto.rut.replace(/\./g, '').replace(/-/g, '').toUpperCase(),
+    cargo: dto.cargo.trim(),
+    activo: dto.activo ?? true,
+    id_empresa_contratista: dto.id_empresa_contratista ?? null, // 🔹 ahora sí guarda la FK directamente
+  });
+
+  const guardado = await this.repo.save(nuevo);
+
+  // Carga la empresa vinculada
+  return this.repo.findOne({
+    where: { id: guardado.id },
+    relations: ['empresa_contratista'],
+  });
+}
 
 
   async update(id: number, dto: UpdatePersonalInternoDto) {

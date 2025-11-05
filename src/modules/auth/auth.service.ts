@@ -8,6 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import { UsuariosService } from '../usuarios/usuarios.service';
 import { LoginDto } from './dto/login.dto';
 import { Usuario } from '../usuarios/usuarios.entity';
+import { Guardia } from '../guardias/guardia.entity';
 
 @Injectable()
 export class AuthService {
@@ -16,10 +17,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  
-  //  Valida las credenciales del usuario.
-  //   Verifica email, estado activo y coincidencia del password.
-  
   async validateUser(email: string, password: string): Promise<Usuario> {
     try {
       const user = await this.usuariosService.findByEmail(email);
@@ -44,41 +41,47 @@ export class AuthService {
     }
   }
 
-  
-    // Genera un token JWT con la información esencial del usuario.
-    // Centralizado para permitir reutilización (e.g., recuperación, invitaciones).
-  
-  private generateToken(user: Usuario): string {
-    const payload = { sub: user.id, email: user.email, rol: user.rol };
-    return this.jwtService.sign(payload, {
-      expiresIn: process.env.JWT_EXPIRES_IN || '12h',
-    });
-  }
-
-  
-  //  Inicia sesión generando un token JWT seguro.
-  //  Incluye el rol y el ID del usuario en el payload.
-  
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
 
-    const accessToken = this.generateToken(user);
+    let idGuardia: number | null = null;
+    let nombreGuardia: string | null = null;
+
+    try {
+      const guardia = await this.usuariosService.findGuardiaByUsuarioId(user.id);
+      if (guardia) {
+        idGuardia = guardia.id;
+        nombreGuardia = guardia.nombre;
+      }
+    } catch {
+      idGuardia = null;
+    }
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      rol: user.rol,
+      nombre: nombreGuardia || user.nombre,
+      id_guardia: idGuardia,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: process.env.JWT_EXPIRES_IN || '12h',
+    });
 
     return {
       message: 'Inicio de sesión exitoso',
       access_token: accessToken,
       user: {
         id: user.id,
-        nombre: user.nombre,
+        id_guardia: idGuardia,
+        nombre: nombreGuardia || user.nombre,
         email: user.email,
         rol: user.rol,
       },
     };
   }
 
-  
-  //  Verifica la validez de un token y devuelve su payload decodificado.
-   
   async verifyToken(token: string) {
     try {
       return this.jwtService.verify(token);

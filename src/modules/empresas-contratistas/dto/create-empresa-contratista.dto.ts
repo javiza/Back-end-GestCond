@@ -26,6 +26,17 @@ export class CreateEmpresaContratistaDto {
   @IsString()
   nombre_empresa: string;
 
+   @ApiProperty({
+    example: '12345678-9',
+    description: 'RUT chileno válido con guion',
+  })
+  @IsNotEmpty({ message: 'El RUT es obligatorio.' })
+  @Matches(/^[0-9]{7,8}-[0-9kK]$/, {
+    message: 'El RUT debe tener un formato válido (ejemplo: 12345678-9).',
+  })
+  rut: string;
+
+
   @ApiPropertyOptional({
     example: 'Construcción y mantenimiento',
     description: 'Rubro o área de trabajo de la empresa (opcional)',

@@ -10,12 +10,16 @@ import * as bcrypt from 'bcryptjs';
 import { Usuario } from './usuarios.entity';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Guardia } from '../guardias/guardia.entity';
 
 @Injectable()
 export class UsuariosService {
+ 
   constructor(
     @InjectRepository(Usuario)
     private readonly usuariosRepo: Repository<Usuario>,
+     @InjectRepository(Guardia)
+    private readonly guardiasRepo: Repository<Guardia>,
   ) {}
 
   async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
@@ -141,5 +145,11 @@ export class UsuariosService {
 
     // Devolver estado actualizado sin nueva consulta
     return { ...usuario, activo: false };
+  }
+   async findGuardiaByUsuarioId(id_usuario: number): Promise<Guardia | null> {
+    return this.guardiasRepo.findOne({
+      where: { usuario: { id: id_usuario } },
+      relations: ['usuario'],
+    });
   }
 }

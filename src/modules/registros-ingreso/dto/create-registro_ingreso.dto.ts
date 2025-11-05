@@ -2,31 +2,26 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsInt,
   Matches,
   IsIn,
+  IsInt,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-/**
- * DTO: Crear Registro de Ingreso
- * Controla el ingreso de visitas, deliverys y trabajadores al condominio.
- */
 export class CreateRegistroIngresoDto {
-  @ApiProperty({
+    @ApiProperty({
     example: 3,
     description: 'ID del guardia que registra el ingreso (FK hacia guardias)',
   })
-  @IsNotEmpty({ message: 'El id_guardia es obligatorio' })
-  @IsInt({ message: 'El id_guardia debe ser un número entero' })
+  @IsNotEmpty({ message: 'El id_guardia es obligatorio.' })
+  @IsInt({ message: 'El id_guardia debe ser un número entero.' })
   id_guardia: number;
-
+  
   @ApiPropertyOptional({
     example: 2,
     description: 'ID de la autorización QR (puede ser nulo si no aplica)',
   })
   @IsOptional()
-  @IsInt({ message: 'El id_autorizacion_qr debe ser un número entero' })
   id_autorizacion_qr?: number;
 
   @ApiPropertyOptional({
@@ -34,7 +29,7 @@ export class CreateRegistroIngresoDto {
     description: 'Nombre de la persona que ingresa (visitante, delivery, etc.)',
   })
   @IsOptional()
-  @IsString({ message: 'El nombre debe ser una cadena de texto' })
+  @IsString()
   nombre?: string;
 
   @ApiPropertyOptional({
@@ -43,7 +38,7 @@ export class CreateRegistroIngresoDto {
   })
   @IsOptional()
   @Matches(/^[0-9]{7,8}-[0-9kK]$/, {
-    message: 'RUT inválido. Ejemplo válido: 12345678-9',
+    message: 'RUT inválido. Ejemplo válido: 12345678-9.',
   })
   rut?: string;
 
@@ -52,43 +47,43 @@ export class CreateRegistroIngresoDto {
     description: 'Patente del vehículo que ingresa (si aplica)',
   })
   @IsOptional()
-  @IsString({ message: 'La patente debe ser una cadena de texto' })
+  @IsString()
   patente?: string;
 
   @ApiPropertyOptional({
-    example: 'auto',
-    enum: ['moto', 'auto'],
-    description: 'Tipo de vehículo (auto o moto, si aplica)',
+    example: 'camioneta',
+    description: 'Tipo de vehículo (auto, moto, bicicleta, etc.)',
   })
   @IsOptional()
-  @IsIn(['moto', 'auto'], {
-    message: 'El tipo de vehículo debe ser "moto" o "auto"',
-  })
-  tipo_vehiculo?: 'moto' | 'auto';
+  @IsString()
+  tipo_vehiculo?: string;
 
   @ApiProperty({
     example: 'Administrador Juan Pérez',
     description: 'Persona que autoriza el ingreso',
   })
-  @IsNotEmpty({ message: 'El campo autorizado_por es obligatorio' })
-  @IsString({ message: 'El autorizado_por debe ser una cadena de texto' })
+  @IsNotEmpty()
+  @IsString()
   autorizado_por: string;
+
+  @ApiProperty({
+    example: 'Casa 23 - Condominio Los Alerces',
+    description: 'Lugar o destino del visitante dentro del condominio',
+  })
+  @IsNotEmpty()
+  @IsString()
+  lugar_destino: string;
 
   @ApiProperty({
     example: 'visita',
     enum: ['visita', 'delivery', 'trabajador'],
-    description: 'Tipo de visita registrada',
   })
-  @IsNotEmpty({ message: 'El campo tipo_visita es obligatorio' })
-  @IsIn(['visita', 'delivery', 'trabajador'], {
-    message:
-      'El tipo de visita debe ser "visita", "delivery" o "trabajador"',
-  })
+  @IsNotEmpty()
+  @IsIn(['visita', 'delivery', 'trabajador'])
   tipo_visita: 'visita' | 'delivery' | 'trabajador';
 
   @ApiPropertyOptional({
     example: '2025-10-31T20:30:00Z',
-    description: 'Fecha manual del ingreso (usualmente autogenerada)',
   })
   @IsOptional()
   fecha_hora_ingreso?: Date;
