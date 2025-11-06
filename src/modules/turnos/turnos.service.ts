@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Turno } from './turno.entity';
 import { CreateTurnoDto } from './dto/create-turno.dto';
+import { CerrarTurnoDto } from './dto/cerrar-turno.dto';
 import { UpdateTurnoDto } from './dto/update-turno.dto';
 import { Guardia } from '../guardias/guardia.entity';
 
@@ -16,55 +21,75 @@ export class TurnosService {
     private readonly guardiasRepo: Repository<Guardia>,
   ) {}
 
-  async create(dto: CreateTurnoDto): Promise<Turno> {
-    try {
-      const guardia = dto.id_guardia
-        ? await this.guardiasRepo.findOne({ where: { id: dto.id_guardia } })
-        : undefined; 
-
-      const nuevoTurno = this.repo.create({
-        // estos campos deben existir en turno.entity.ts
-        observacion_turno: dto.observacion_turno,
-        fecha_hora_inicio: dto.fecha_hora_inicio ?? new Date(),
-        fecha_hora_termino: dto.fecha_hora_termino ?? new Date(),
-        guardia, 
-      } as Partial<Turno>); // esto fuerza el tipo correcto para evitar error de tipado
-
-      return await this.repo.save(nuevoTurno);
-    } catch (error) {
-      if (error.code === '23505') {
-        throw new ConflictException('Error: turno duplicado o datos inválidos.');
-      }
-      throw error;
-    }
+  //  Crear turno (inicio)
+async create(dto: CreateTurnoDto): Promise<Turno> {
+  // Buscar guardia según id recibido
+  const guardia = await this.guardiasRepo.findOne({ where: { id: dto.id_guardia } });
+  if (!guardia) {
+    throw new NotFoundException(`No se encontró un guardia con ID ${dto.id_guardia}.`);
   }
 
+  // Crear turno con relación ManyToOne
+  const nuevoTurno = this.repo.create({
+    observacion_inicio: dto.observacion_inicio,
+    guardia: guardia, // Asignar la entidad guardia completa
+  });
+
+  // Guardar turno y devolver con relación cargada
+  
+const guardado = await this.repo.save(nuevoTurno);
+const turnoCompleto = await this.repo.findOne({
+  where: { id: guardado.id },
+  relations: ['guardia'],
+});
+
+if (!turnoCompleto) {
+  throw new NotFoundException('Error al obtener el turno recién creado.');
+}
+
+return turnoCompleto;
+
+}
+
+
+  // Cerrar turno (término)
+  async cerrarTurno(id: number, dto: CerrarTurnoDto): Promise<Turno> {
+    const turno = await this.repo.findOne({ where: { id } });
+    if (!turno) throw new NotFoundException('Turno no encontrado.');
+
+    turno.observacion_termino = dto.observacion_termino;
+    // fecha_hora_termino se actualiza automáticamente con @UpdateDateColumn
+    return this.repo.save(turno);
+  }
+
+  //  Listar todos los turnos
   async findAll(): Promise<Turno[]> {
     return this.repo.find({
-      relations: ['guardia', 'rondas'],
+      relations: ['guardia'],
       order: { fecha_hora_inicio: 'DESC' },
     });
   }
 
+  // Buscar un turno específico
   async findOne(id: number): Promise<Turno> {
     const turno = await this.repo.findOne({
       where: { id },
-      relations: ['guardia', 'rondas'],
+      relations: ['guardia'],
     });
-
-    if (!turno) {
-      throw new NotFoundException(`Turno con ID ${id} no encontrado.`);
-    }
-
+    if (!turno) throw new NotFoundException('Turno no encontrado.');
     return turno;
   }
 
+  // Actualizar turno (uso administrativo)
   async update(id: number, dto: UpdateTurnoDto): Promise<Turno> {
     const turno = await this.findOne(id);
 
     if (dto.id_guardia) {
-      const guardia = await this.guardiasRepo.findOne({ where: { id: dto.id_guardia } });
-      if (!guardia) throw new NotFoundException('Guardia no encontrado');
+      const guardia = await this.guardiasRepo.findOne({
+        where: { id: dto.id_guardia },
+      });
+      if (!guardia)
+        throw new NotFoundException('Guardia asociado no encontrado.');
       turno.guardia = guardia;
     }
 
@@ -72,6 +97,7 @@ export class TurnosService {
     return this.repo.save(turno);
   }
 
+  //  Eliminar turno
   async remove(id: number): Promise<void> {
     const turno = await this.findOne(id);
     await this.repo.remove(turno);

@@ -54,4 +54,6 @@ export class AutorizacionQR {
   @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'id_usuario' })
   usuario?: Usuario | null;
+    @Column({ type: 'boolean', default: false })
+  usado: boolean;
 }

@@ -135,13 +135,18 @@ CREATE TABLE trabajos (
 -- =============================================
 CREATE TABLE turnos (
   id SERIAL PRIMARY KEY,
-  observacion_turno TEXT NOT NULL,
+  observacion_inicio TEXT NOT NULL,
+  observacion_termino TEXT  NULL,
   fecha_hora_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_hora_termino TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_guardia INT NULL,
   FOREIGN KEY (id_guardia) REFERENCES guardias(id) ON DELETE SET NULL
 );
+ALTER TABLE turnos
+  RENAME COLUMN observacion_turno TO observacion_inicio;
 
+ALTER TABLE turnos
+  ADD COLUMN observacion_termino TEXT NULL;
 -- =============================================
 -- 🔟 TABLA: RONDAS
 -- =============================================
@@ -162,10 +167,12 @@ CREATE TABLE autorizacion_qr (
   codigo_qr VARCHAR(255) UNIQUE NOT NULL,
   nombre_visita VARCHAR (100) not null,--agregado recientemente faltaa
   motivo TEXT,
+  usado BOOLEAN default false;
   fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_usuario INT NULL,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
 );
+ALTER TABLE autorizacion_qr ADD COLUMN IF NOT EXISTS usado BOOLEAN DEFAULT false;
 
 -- =============================================
 -- 12️⃣ TABLA: REGISTROS DE INGRESO

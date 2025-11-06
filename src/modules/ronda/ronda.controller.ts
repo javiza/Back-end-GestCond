@@ -34,34 +34,24 @@ export class RondasController {
 
   @Get()
   @Roles(RolUsuario.GUARDIA, RolUsuario.ADMINISTRADOR)
-  @ApiOperation({ summary: 'Listar todas las rondas registradas' })
-  @ApiResponse({ status: 200, description: 'Listado de rondas obtenido con éxito.' })
   findAll() {
     return this.service.findAll();
   }
 
   @Get(':id')
   @Roles(RolUsuario.GUARDIA, RolUsuario.ADMINISTRADOR)
-  @ApiOperation({ summary: 'Obtener detalles de una ronda específica' })
-  @ApiResponse({ status: 200, description: 'Ronda encontrada.' })
-  @ApiResponse({ status: 404, description: 'Ronda no encontrada.' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }
 
   @Post()
   @Roles(RolUsuario.GUARDIA)
-  @ApiOperation({ summary: 'Registrar una nueva ronda' })
-  @ApiResponse({ status: 201, description: 'Ronda creada exitosamente.' })
   create(@Body() dto: CreateRondaDto) {
     return this.service.create(dto);
   }
 
   @Put(':id')
   @Roles(RolUsuario.GUARDIA, RolUsuario.ADMINISTRADOR)
-  @ApiOperation({ summary: 'Actualizar una ronda existente' })
-  @ApiResponse({ status: 200, description: 'Ronda actualizada exitosamente.' })
-  @ApiResponse({ status: 404, description: 'Ronda no encontrada.' })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRondaDto) {
     return this.service.update(id, dto);
   }
@@ -69,8 +59,6 @@ export class RondasController {
   @Delete(':id')
   @Roles(RolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Eliminar una ronda (solo administradores)' })
-  @ApiResponse({ status: 204, description: 'Ronda eliminada correctamente.' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
   }

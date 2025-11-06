@@ -84,44 +84,64 @@ async findByUsuario(id_usuario: number): Promise<AutorizacionQR[]> {
   //  Si es válido : emite AUTORIZACION_VALIDADA
   //   Si no existe : emite AUTORIZACION_RECHAZADA
 
-  async validarQR(dto: ValidarQRDto) {
-    const autorizacion = await this.repo.findOne({
-      where: { codigo_qr: dto.codigo_qr },
-      relations: ['usuario'],
-    });
+ async validarQR(dto: ValidarQRDto) {
+  const autorizacion = await this.repo.findOne({
+    where: { codigo_qr: dto.codigo_qr },
+    relations: ['usuario'],
+  });
 
-    if (!autorizacion) {
-      this.kafka.emit(Topics.AUTORIZACION_RECHAZADA, {
-        codigo_qr: dto.codigo_qr,
-        motivo: 'Código QR inexistente o expirado',
-        fecha_hora: new Date().toISOString(),
-        id_guardia: dto.id_guardia,
-      });
-
-      this.logger.warn(`AUTORIZACION_RECHAZADA → ${dto.codigo_qr}`);
-      throw new NotFoundException('Código QR inválido o inexistente');
-    }
-
-    this.kafka.emit(Topics.AUTORIZACION_VALIDADA, {
-      id_autorizacion_qr: autorizacion.id,
-      codigo_qr: autorizacion.codigo_qr,
-      nombre_visita: autorizacion.nombre_visita,
-      tipo_visita: dto.tipo_visita,
-      nombre: dto.nombre,
-      rut: dto.rut ?? null,
-      patente: dto.patente ?? null,
-      tipo_vehiculo: dto.tipo_vehiculo ?? null,
-      autorizado_por: autorizacion.usuario?.nombre ?? 'N/D',
+  // ❌ No existe
+  if (!autorizacion) {
+    this.kafka.emit(Topics.AUTORIZACION_RECHAZADA, {
+      codigo_qr: dto.codigo_qr,
+      motivo: 'Código QR inexistente o expirado',
+      fecha_hora: new Date().toISOString(),
       id_guardia: dto.id_guardia,
-      fecha_hora_ingreso: new Date().toISOString(),
     });
 
-    this.logger.log(`AUTORIZACION_VALIDADA → ${autorizacion.codigo_qr}`);
-
-    return {
-      ok: true,
-      message: 'Autorización válida. Evento emitido a Kafka.',
-      autorizacion_id: autorizacion.id,
-    };
+    this.logger.warn(`AUTORIZACION_RECHAZADA → ${dto.codigo_qr}`);
+    throw new NotFoundException('Código QR inválido o inexistente');
   }
+
+  // 🚫 Ya fue usado anteriormente
+  if (autorizacion.usado) {
+    this.kafka.emit(Topics.AUTORIZACION_RECHAZADA, {
+      codigo_qr: dto.codigo_qr,
+      motivo: 'El código QR ya fue utilizado previamente',
+      fecha_hora: new Date().toISOString(),
+      id_guardia: dto.id_guardia,
+    });
+
+    this.logger.warn(`AUTORIZACION_RECHAZADA (reuso) → ${dto.codigo_qr}`);
+    throw new NotFoundException('El código QR ya fue utilizado.');
+  }
+
+  // ✅ Código válido — se marca como usado
+  autorizacion.usado = true;
+  await this.repo.save(autorizacion);
+
+  // Emitir evento Kafka
+  this.kafka.emit(Topics.AUTORIZACION_VALIDADA, {
+    id_autorizacion_qr: autorizacion.id,
+    codigo_qr: autorizacion.codigo_qr,
+    nombre_visita: autorizacion.nombre_visita,
+    tipo_visita: dto.tipo_visita,
+    nombre: dto.nombre,
+    rut: dto.rut ?? null,
+    patente: dto.patente ?? null,
+    tipo_vehiculo: dto.tipo_vehiculo ?? null,
+    autorizado_por: autorizacion.usuario?.nombre ?? 'N/D',
+    id_guardia: dto.id_guardia,
+    fecha_hora_ingreso: new Date().toISOString(),
+  });
+
+  this.logger.log(`AUTORIZACION_VALIDADA → ${autorizacion.codigo_qr}`);
+
+  return {
+    ok: true,
+    message: 'Autorización válida. Código QR marcado como usado.',
+    autorizacion_id: autorizacion.id,
+  };
+}
+
 }

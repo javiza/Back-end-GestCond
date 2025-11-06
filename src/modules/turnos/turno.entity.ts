@@ -5,11 +5,10 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
-  OneToMany,
+  UpdateDateColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Guardia } from '../guardias/guardia.entity';
-import { Ronda } from '../ronda/ronda.entity';
 
 @Entity('turnos')
 export class Turno {
@@ -17,23 +16,33 @@ export class Turno {
   @ApiProperty({ example: 1 })
   id: number;
 
-  @ApiProperty({ example: 'Turno nocturno sin novedades' })
-  @Column({ type: 'text', name: 'observacion_turno', nullable: false })
-  observacion_turno: string;
+  @ApiProperty({ example: 'Inicio de turno sin novedades' })
+  @Column({ type: 'text', name: 'observacion_inicio', nullable: false })
+  observacion_inicio: string;
 
-  @ApiProperty({ example: '2025-10-31T22:00:00.000Z' })
-  @CreateDateColumn({ name: 'fecha_hora_inicio', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @ApiProperty({ example: 'Finalizo turno sin novedades' })
+  @Column({ type: 'text', name: 'observacion_termino', nullable: true })
+  observacion_termino?: string;
+
+  @CreateDateColumn({
+    name: 'fecha_hora_inicio',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   fecha_hora_inicio: Date;
 
-  @ApiProperty({ example: '2025-11-01T06:00:00.000Z' })
-  @CreateDateColumn({ name: 'fecha_hora_termino', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_hora_termino: Date;
+  @UpdateDateColumn({
+    name: 'fecha_hora_termino',
+    type: 'timestamp',
+    nullable: true,
+  })
+  fecha_hora_termino?: Date;
 
-  @ManyToOne(() => Guardia, { nullable: true, onDelete: 'SET NULL' })
+ @Column({ name: 'id_guardia', type: 'int', nullable: true })
+  id_guardia?: number;
+
+  /** relación ManyToOne */
+  @ManyToOne(() => Guardia, { nullable: true, onDelete: 'SET NULL', eager: true })
   @JoinColumn({ name: 'id_guardia' })
-  @ApiProperty({ type: () => Guardia, required: false })
   guardia?: Guardia;
-
-  @OneToMany(() => Ronda, (ronda) => ronda.id)
-  rondas?: Ronda[];
 }
