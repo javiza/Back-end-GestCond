@@ -1,7 +1,6 @@
-import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 import 'reflect-metadata';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -18,37 +17,46 @@ import { GuardiasModule } from './modules/guardias/guardias.module';
 import { ResidentesModule } from './modules/residentes/residentes.module';
 import { TurnosModule } from './modules/turnos/turnos.module';
 import { TrabajosModule } from './modules/trabajos/trabajos.module';
-import 'typeorm/driver/postgres/PostgresDriver';
+import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 
 @Module({
   imports: [
-    // Configuración global
+    // 🔹 Carga variables de entorno (.env)
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // Conexión PostgreSQL
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME || 'jona',
-      password: process.env.DB_PASSWORD || '1234',
-      database: process.env.DB_DATABASE || 'condominio7',
-      autoLoadEntities: true,
-      synchronize: false,
-      logging: false,
+    // 🔹 Conexión PostgreSQL dinámica y segura (Render compatible)
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST', 'localhost'),
+        port: parseInt(configService.get<string>('DB_PORT', '5432'), 10),
+        username: configService.get<string>('DB_USERNAME', 'jona'),
+        password: configService.get<string>('DB_PASSWORD', '1234'),
+        database: configService.get<string>('DB_DATABASE', 'condominio7'),
+        autoLoadEntities: true,
+        synchronize: false, // ⚠️ En producción mejor false
+        logging: false,
+
+        //  Render requiere SSL/TLS para conexiones externas
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      }),
     }),
 
-    //  Kafka (opcional)
+    // 🔹 Kafka (solo si está habilitado)
     ...(process.env.USE_KAFKA === 'true' ? [KafkaModule] : []),
 
-    // Módulos funcionales
+    // 🔹 Módulos funcionales
     UsuariosModule,
     AuthModule,
     AnalyticsModule,
-   TrabajosModule,
+    TrabajosModule,
     VehiculosModule,
     RondasModule,
     CasasModule,

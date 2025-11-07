@@ -165,9 +165,9 @@ CREATE TABLE rondas (
 CREATE TABLE autorizacion_qr (
   id SERIAL PRIMARY KEY,
   codigo_qr VARCHAR(255) UNIQUE NOT NULL,
-  nombre_visita VARCHAR (100) not null,--agregado recientemente faltaa
+  nombre_visita VARCHAR (100) not null,
   motivo TEXT,
-  usado BOOLEAN default false;
+  usado BOOLEAN default false,
   fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_usuario INT NULL,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
@@ -191,7 +191,7 @@ CREATE TABLE registros_ingreso (
   id_autorizacion_qr INT NULL,
   id_guardia INT NOT NULL,
   FOREIGN KEY (id_autorizacion_qr) REFERENCES autorizacion_qr(id) ON DELETE SET NULL,
-  FOREIGN KEY (id_guardia) REFERENCES (id) ON DELETE CASCADE
+  FOREIGN KEY (id_guardia) REFERENCES guardias(id) ON DELETE CASCADE
 );
 ALTER TABLE registros_ingreso DROP CONSTRAINT registros_ingreso_rut_key;
 
