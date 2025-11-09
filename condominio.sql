@@ -37,6 +37,7 @@ CREATE TABLE residentes (
   nombre VARCHAR(100) NOT NULL,
   rut VARCHAR(12) UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
   email VARCHAR(100) UNIQUE NOT NULL,
+  telefono VARCHAR(20),--se agrega telefono
   activo BOOLEAN DEFAULT TRUE,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_casa INT NULL,
@@ -44,6 +45,9 @@ CREATE TABLE residentes (
   FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE SET NULL,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
 );
+
+ALTER TABLE residentes
+ADD COLUMN telefono VARCHAR(20);
 
 -- =============================================
 -- 4️⃣ TABLA: EMPRESAS CONTRATISTAS
@@ -68,7 +72,7 @@ CREATE TABLE guardias (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
   rut VARCHAR(12) UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
-  telefono varchar(12),
+  telefono varchar(20),
   email VARCHAR(100),--se agrega este campo
   activo BOOLEAN DEFAULT TRUE,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -77,6 +81,9 @@ CREATE TABLE guardias (
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL,
   FOREIGN KEY (id_empresa_contratista) REFERENCES empresas_contratistas(id) ON DELETE SET NULL
 );
+
+ALTER TABLE guardias ALTER COLUMN telefono TYPE VARCHAR(20);
+
 ALTER TABLE guardias DROP CONSTRAINT IF EXISTS guardias_email_key;
 ALTER TABLE guardias ADD COLUMN IF NOT EXISTS telefono VARCHAR(12);
 ALTER TABLE guardias
@@ -93,15 +100,18 @@ ALTER TABLE guardias
 -- =============================================
 CREATE TABLE vehiculos (
   id SERIAL PRIMARY KEY,
-  nombre_dueño VARCHAR(100) NOT NULL,
+  nombre_dueno VARCHAR(100) NOT NULL,
   patente VARCHAR(10) UNIQUE NOT NULL,
   marca VARCHAR(50),
   modelo VARCHAR(50),
   color VARCHAR(30),
-  tipo_vehiculo VARCHAR(20) CHECK (tipo_vehiculo IN ('auto', 'moto')),
+  tipo_vehiculo VARCHAR(20),
   id_casa INT NOT NULL,
   FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE CASCADE
 );
+ALTER TABLE vehiculos DROP CONSTRAINT IF EXISTS vehiculos_tipo_vehiculo_check;
+
+ALTER TABLE vehiculos RENAME COLUMN nombre_dueño TO nombre_dueno;
 
 -- =============================================
 -- 7️⃣ TABLA: PERSONAL INTERNO
@@ -172,6 +182,8 @@ CREATE TABLE autorizacion_qr (
   id_usuario INT NULL,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
 );
+
+
 ALTER TABLE autorizacion_qr ADD COLUMN IF NOT EXISTS usado BOOLEAN DEFAULT false;
 
 -- =============================================

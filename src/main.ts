@@ -16,7 +16,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:4200',
       'http://localhost:8100',
-      'https://gest-cond.onrender.com',
+      'https://front-end-gestcond.onrender.com',
     ],
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     credentials: true,

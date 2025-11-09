@@ -34,7 +34,7 @@ export class RegistrosConsumer {
           ? new Date(data.fecha_hora_ingreso)
           : new Date(),
 
-        // ✅ FK hacia guardias (tu tabla usa id_guardia)
+        // FK hacia guardias (tu tabla usa id_guardia)
         guardia: { id: Number(data.id_guardia) || 1 } as any,
 
         // Asociación con autorización QR (si aplica)

@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   ParseIntPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,12 +33,12 @@ export class TrabajosController {
   constructor(private readonly service: TrabajosService) {}
 
   @Post()
-  @Roles(RolUsuario.ADMINISTRADOR)
-  @ApiOperation({ summary: 'Registrar nuevo trabajo de personal interno' })
-  @ApiResponse({ status: 201, description: 'Trabajo creado correctamente.' })
-  create(@Body() dto: CreateTrabajoDto) {
-    return this.service.create(dto);
-  }
+@Roles(RolUsuario.ADMINISTRADOR)
+@HttpCode(HttpStatus.CREATED)
+@ApiOperation({ summary: 'Registrar nuevo trabajo de personal interno' })
+create(@Body() dto: CreateTrabajoDto) {
+  return this.service.create(dto);
+}
 
   @Get()
   @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.GUARDIA)

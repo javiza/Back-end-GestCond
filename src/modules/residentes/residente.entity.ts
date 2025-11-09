@@ -36,6 +36,10 @@ export class Residente {
   @Column({ type: 'varchar', length: 100, unique: true, nullable: false })
   email: string;
 
+  @ApiPropertyOptional({ example: '+56 9 9876 5432', description: 'Teléfono del residente' })
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  telefono?: string;
+
   @ApiPropertyOptional({ example: true, description: 'Indica si el residente está activo' })
   @Column({ type: 'boolean', default: true })
   activo: boolean;

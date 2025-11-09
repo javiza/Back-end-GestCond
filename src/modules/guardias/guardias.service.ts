@@ -137,13 +137,23 @@ export class GuardiasService {
   //     order: { id: 'ASC' },
   //   });
   // }
-  async findAll(): Promise<Guardia[]> {
+ async findAll(): Promise<Guardia[]> {
   return this.guardiasRepo.find({
-    select: ['id', 'nombre', 'rut', 'activo'], // solo los campos necesarios
+    select: {
+      id: true,
+      nombre: true,
+      rut: true,
+      telefono: true,
+      email: true,
+      activo: true,
+      fecha_creacion: true,
+    },
+    relations: ['usuario', 'empresaContratista'],
     where: { activo: true },
     order: { nombre: 'ASC' },
   });
 }
+
 
 
   async findOne(id: number): Promise<Guardia> {

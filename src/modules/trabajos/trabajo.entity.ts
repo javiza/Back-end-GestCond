@@ -26,12 +26,12 @@ export class Trabajo {
     example: '2025-10-31T09:00:00.000Z',
     description: 'Fecha y hora de inicio del trabajo',
   })
-  @CreateDateColumn({
-    name: 'fecha_inicio',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  fecha_inicio: Date;
+  @Column({
+  name: 'fecha_inicio',
+  type: 'timestamp',
+  default: () => 'CURRENT_TIMESTAMP',
+})
+fecha_inicio: Date;
 
   @ApiPropertyOptional({
     example: '2025-10-31T13:30:00.000Z',

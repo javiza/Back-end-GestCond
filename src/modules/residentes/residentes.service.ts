@@ -25,6 +25,7 @@ export class ResidentesService {
       nombre: dto.nombre,
       rut: dto.rut,
       email: dto.email,
+      telefono: dto.telefono, 
       activo: dto.activo ?? true,
       casa: dto.id_casa ? ({ id: dto.id_casa } as Casa) : undefined,
       usuario: dto.id_usuario ? ({ id: dto.id_usuario } as Usuario) : undefined,
@@ -58,6 +59,7 @@ export class ResidentesService {
 
     Object.assign(residente, {
       ...dto,
+      telefono: dto.telefono ?? residente.telefono,
       casa: dto.id_casa ? ({ id: dto.id_casa } as Casa) : residente.casa,
       usuario: dto.id_usuario ? ({ id: dto.id_usuario } as Usuario) : residente.usuario,
     });

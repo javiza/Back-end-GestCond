@@ -16,7 +16,7 @@ export class Vehiculo {
 
   @ApiProperty({ example: 'Carlos Pérez', description: 'Nombre del dueño del vehículo' })
   @Column({ type: 'varchar', length: 100, nullable: false })
-  nombre_dueño: string;
+  nombre_dueno: string;
 
   @ApiProperty({ example: 'ABCD12', description: 'Patente única del vehículo' })
   @Column({ type: 'varchar', length: 10, unique: true })
@@ -34,12 +34,9 @@ export class Vehiculo {
   @Column({ type: 'varchar', length: 30, nullable: true })
   color?: string;
 
-  @ApiProperty({ example: 'auto', enum: ['auto', 'moto'], description: 'Tipo de vehículo' })
-  @Column({
-    type: 'varchar',
-    length: 20,
-  })
-  tipo_vehiculo: 'auto' | 'moto';
+  @ApiProperty({ example: 'camioneta', description: 'Tipo de vehículo (texto libre)' })
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  tipo_vehiculo: string;
 
   // Relación con Casa
   @ApiProperty({ type: () => Casa, description: 'Casa a la que pertenece el vehículo' })

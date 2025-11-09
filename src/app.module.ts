@@ -21,13 +21,13 @@ import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 
 @Module({
   imports: [
-    // 🔹 Carga variables de entorno (.env)
+    //  Carga variables de entorno (.env)
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // 🔹 Conexión PostgreSQL dinámica y segura (Render compatible)
+    //  Conexión PostgreSQL dinámica y segura (Render compatible)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -35,11 +35,11 @@ import { AuditoriaModule } from './modules/auditoria/auditoria.module';
         type: 'postgres',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: parseInt(configService.get<string>('DB_PORT', '5432'), 10),
-        username: configService.get<string>('DB_USERNAME', 'jona'),
-        password: configService.get<string>('DB_PASSWORD', '1234'),
-        database: configService.get<string>('DB_DATABASE', 'condominio7'),
+        username: configService.get<string>('DB_USERNAME', ),
+        password: configService.get<string>('DB_PASSWORD', ),
+        database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
-        synchronize: false, // ⚠️ En producción mejor false
+        synchronize: false, // En producción mejor false
         logging: false,
 
         //  Render requiere SSL/TLS para conexiones externas
@@ -49,10 +49,10 @@ import { AuditoriaModule } from './modules/auditoria/auditoria.module';
       }),
     }),
 
-    // 🔹 Kafka (solo si está habilitado)
+    //  Kafka (solo si está habilitado)
     ...(process.env.USE_KAFKA === 'true' ? [KafkaModule] : []),
 
-    // 🔹 Módulos funcionales
+    //  Módulos funcionales
     UsuariosModule,
     AuthModule,
     AnalyticsModule,

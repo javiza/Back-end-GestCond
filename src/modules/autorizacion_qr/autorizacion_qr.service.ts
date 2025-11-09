@@ -56,7 +56,7 @@ export class AutorizacionQRService {
 
   return saved;
 }
-// 📋 Obtener todas las visitas registradas (todas las autorizaciones QR)
+// Obtener todas las visitas registradas (todas las autorizaciones QR)
 async findAll(): Promise<AutorizacionQR[]> {
   return this.repo.find({
     relations: ['usuario'],
@@ -90,7 +90,7 @@ async findByUsuario(id_usuario: number): Promise<AutorizacionQR[]> {
     relations: ['usuario'],
   });
 
-  // ❌ No existe
+  //  No existe
   if (!autorizacion) {
     this.kafka.emit(Topics.AUTORIZACION_RECHAZADA, {
       codigo_qr: dto.codigo_qr,
@@ -103,7 +103,7 @@ async findByUsuario(id_usuario: number): Promise<AutorizacionQR[]> {
     throw new NotFoundException('Código QR inválido o inexistente');
   }
 
-  // 🚫 Ya fue usado anteriormente
+  // Ya fue usado anteriormente
   if (autorizacion.usado) {
     this.kafka.emit(Topics.AUTORIZACION_RECHAZADA, {
       codigo_qr: dto.codigo_qr,
@@ -116,7 +116,7 @@ async findByUsuario(id_usuario: number): Promise<AutorizacionQR[]> {
     throw new NotFoundException('El código QR ya fue utilizado.');
   }
 
-  // ✅ Código válido — se marca como usado
+  // Código válido — se marca como usado
   autorizacion.usado = true;
   await this.repo.save(autorizacion);
 

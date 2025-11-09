@@ -14,7 +14,7 @@ export class CreateVehiculoDto {
   @IsNotEmpty()
   @IsString()
   @Length(3, 100)
-  nombre_dueño: string;
+  nombre_dueno: string;
 
   @ApiProperty({ example: 'ABCD12', description: 'Patente única del vehículo' })
   @IsNotEmpty()
@@ -37,10 +37,15 @@ export class CreateVehiculoDto {
   @IsString()
   color?: string;
 
-  @ApiProperty({ example: 'auto', enum: ['auto', 'moto'] })
+ @ApiProperty({
+  example: 'camioneta',
+  description: 'Tipo o categoría del vehículo (texto libre)',
+  })
   @IsNotEmpty()
-  @IsIn(['auto', 'moto'])
-  tipo_vehiculo: 'auto' | 'moto';
+  @IsString()
+  @Length(3, 20)
+  tipo_vehiculo: string;
+
 
   @ApiProperty({ example: 1, description: 'ID de la casa a la que pertenece el vehículo' })
   @IsInt()

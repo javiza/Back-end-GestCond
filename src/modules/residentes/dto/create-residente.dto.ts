@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsEmail,
   IsInt,
+  Length,
 } from 'class-validator';
   //DTO para crear un residente.
 export class CreateResidenteDto {
@@ -24,6 +25,12 @@ export class CreateResidenteDto {
   @IsNotEmpty({ message: 'El email es obligatorio' })
   @IsEmail({}, { message: 'El formato del correo no es válido' })
   email: string;
+
+  @ApiPropertyOptional({ example: '+56 9 9876 5432', description: 'Teléfono de contacto del residente' })
+  @IsOptional()
+  @IsString({ message: 'El teléfono debe ser una cadena de texto' })
+  @Length(6, 20, { message: 'El teléfono debe tener entre 6 y 20 caracteres' })
+  telefono?: string;
 
   @ApiPropertyOptional({
     example: true,

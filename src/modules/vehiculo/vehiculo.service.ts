@@ -21,7 +21,7 @@ export class VehiculosService {
   async create(dto: CreateVehiculoDto): Promise<Vehiculo> {
     try {
       const nuevo = this.vehiculosRepo.create({
-        nombre_dueño: dto.nombre_dueño,
+        nombre_dueno: dto.nombre_dueno,
         patente: dto.patente,
         marca: dto.marca,
         modelo: dto.modelo,

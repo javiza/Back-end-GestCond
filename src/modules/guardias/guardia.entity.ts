@@ -36,7 +36,7 @@ export class Guardia {
     example: '+56912345678',
     description: 'Teléfono del guardia (opcional)',
   })
-  @Column({ type: 'varchar', length: 12, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   telefono?: string | null;
 
   @ApiPropertyOptional({
