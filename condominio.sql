@@ -3,6 +3,7 @@
 -- Autor: Jonathan Bustos
 -- Motor: PostgreSQL 16
 -- =============================================
+SELECT current_database();
 
 -- CREATE DATABASE condominio7;
 -- drop database condominio;

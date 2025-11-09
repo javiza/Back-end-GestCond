@@ -13,23 +13,18 @@ async function bootstrap() {
 
   // CORS para el frontend Angular/Ionic
   app.enableCors({
-    origin: [
-      'http://localhost:4200',
-      'http://localhost:8100',
-      'https://front-end-gestcond.onrender.com',
-    ],
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'Accept',
-      'Origin',
-      'X-Requested-With',
-    ],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
+  origin: [
+    'http://localhost:4200',
+    'http://localhost:8100',
+    'https://front-end-gestcond.onrender.com',
+  ],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  credentials: true,
+  allowedHeaders: 'Content-Type, Authorization, Accept, Origin, X-Requested-With',
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+});
+
 
   // Swagger API Docs
   const config = new DocumentBuilder()
