@@ -35,6 +35,13 @@ export class AnalyticsController {
     return this.service.ingresosPorHora(filtro);
   }
 
+  @Get('ingresos-diarios')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Ingresos totales agrupados por fecha (tendencia diaria)' })
+  ingresosDiarios(@Query() filtro: FiltroAnalyticsDto) {
+    return this.service.ingresosDiarios(filtro);
+  }
+
   @Post('refrescar')
   @Roles(RolUsuario.ADMINISTRADOR)
   @ApiOperation({ summary: 'Refrescar la vista materializada de hechos_ingresos' })

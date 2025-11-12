@@ -105,9 +105,19 @@ export class EmpresasContratistasService {
     return await this.repo.save(empresa);
   }
 
-  async remove(id: number): Promise<{ message: string }> {
-    const empresa = await this.findOne(id);
-    await this.repo.remove(empresa);
-    return { message: `Empresa contratista con ID ${id} eliminada del sistema` };
+ async remove(id: number): Promise<{ message: string }> {
+  const empresa = await this.findOne(id);
+
+  if (!empresa.activa) {
+    throw new BadRequestException(`La empresa con ID ${id} ya está inactiva.`);
   }
+
+  empresa.activa = false;
+  empresa.fecha_termino = new Date();
+
+  await this.repo.save(empresa);
+
+  return { message: `Empresa contratista con ID ${id} desactivada correctamente.` };
+}
+
 }

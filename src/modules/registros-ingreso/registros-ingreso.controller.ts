@@ -124,4 +124,18 @@ async create(@Body() dto: CreateRegistroIngresoDto, @Request() req) {
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.service.remove(id);
   }
+
+  // GET - Listar todas las visitas registradas (para administrador o analítica)
+@Get('todas')
+@Roles(RolUsuario.ADMINISTRADOR)
+@ApiOperation({ summary: 'Listar todas las visitas registradas (modo completo)' })
+@ApiResponse({
+  status: 200,
+  description: 'Listado completo de todas las visitas registradas.',
+  type: [RegistroIngreso],
+})
+async listarTodas() {
+  return await this.service.listarTodasVisitas();
+}
+
 }

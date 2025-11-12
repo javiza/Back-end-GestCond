@@ -64,7 +64,7 @@ async findAll(): Promise<AutorizacionQR[]> {
   });
 }
 
-// 🔍 Obtener todas las visitas registradas por un usuario específico
+// Obtener todas las visitas registradas por un usuario específico
 async findByUsuario(id_usuario: number): Promise<AutorizacionQR[]> {
   const usuario = await this.usuariosRepo.findOne({ where: { id: id_usuario } });
 
@@ -137,11 +137,16 @@ async findByUsuario(id_usuario: number): Promise<AutorizacionQR[]> {
 
   this.logger.log(`AUTORIZACION_VALIDADA → ${autorizacion.codigo_qr}`);
 
-  return {
-    ok: true,
-    message: 'Autorización válida. Código QR marcado como usado.',
-    autorizacion_id: autorizacion.id,
-  };
+ return {
+  ok: true,
+  message: 'Autorización válida. Código QR marcado como usado.',
+  autorizacion_id: autorizacion.id,
+  codigo_qr: autorizacion.codigo_qr,
+  nombre_visita: autorizacion.nombre_visita,
+  motivo: autorizacion.motivo,
+  fecha_hora: autorizacion.fecha_hora,
+};
+
 }
 
 }

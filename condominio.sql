@@ -320,8 +320,13 @@ ON CONFLICT (fecha) DO NOTHING;
 
 CREATE INDEX IF NOT EXISTS idx_hechos_tipo_fecha ON analytics.hechos_ingresos (fecha_registro);
 
+
+CREATE UNIQUE INDEX idx_hechos_ingresos_unique_id
+ON analytics.hechos_ingresos (id);
+
+
 -- =============================================
--- 🔑 USUARIOS BASE
+-- USUARIOS BASE
 -- =============================================
 INSERT INTO usuarios (nombre, rut, email, password, rol)
 VALUES

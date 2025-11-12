@@ -18,9 +18,11 @@ import { ResidentesModule } from './modules/residentes/residentes.module';
 import { TurnosModule } from './modules/turnos/turnos.module';
 import { TrabajosModule } from './modules/trabajos/trabajos.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
-
+import { ScheduleModule } from '@nestjs/schedule';
+import { RegistroIngresosAdminModule } from './modules/registro-ingresos-admin/registro-ingresos-admin.module';
 @Module({
   imports: [
+     ScheduleModule.forRoot(),
     //  Carga variables de entorno (.env)
     ConfigModule.forRoot({
       isGlobal: true,
@@ -68,6 +70,7 @@ import { AuditoriaModule } from './modules/auditoria/auditoria.module';
     GuardiasModule,
     ResidentesModule,
     TurnosModule,
+    RegistroIngresosAdminModule,
   ],
 })
 export class AppModule {}

@@ -117,4 +117,16 @@ export class RegistrosIngresosService {
     const registro = await this.findOne(id);
     return this.repo.remove(registro);
   }
+  
+  async listarTodasVisitas(): Promise<RegistroIngreso[]> {
+  try {
+    return await this.repo.find({
+      relations: ['guardia', 'autorizacionQR'],
+      order: { fechaHoraIngreso: 'DESC' },
+    });
+  } catch (error) {
+    console.error(' Error al listar todas las visitas:', error);
+    throw new InternalServerErrorException('Error al listar todas las visitas registradas.');
+  }
+}
 }
