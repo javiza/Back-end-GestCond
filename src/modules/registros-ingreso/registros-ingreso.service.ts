@@ -6,6 +6,7 @@ import { CreateRegistroIngresoDto } from './dto/create-registro_ingreso.dto';
 import { UpdateRegistroIngresoDto } from './dto/update-registro-ingreso.dto';
 import { Guardia } from '../guardias/guardia.entity';
 import { Turno } from '../turnos/turno.entity';
+import { RegistrosGateway } from './registros.gateway';
 
 @Injectable()
 export class RegistrosIngresosService {
@@ -18,9 +19,11 @@ export class RegistrosIngresosService {
 
     @InjectRepository(Turno)
     private readonly turnosRepo: Repository<Turno>,
+
+    private readonly gateway: RegistrosGateway, 
   ) {}
 
-  // 📋 Listar todos los registros
+  //  Listar todos los registros
   async findAll(): Promise<RegistroIngreso[]> {
     try {
       return await this.repo.find({
@@ -33,7 +36,7 @@ export class RegistrosIngresosService {
     }
   }
 
-  // 🔎 Buscar un registro por ID
+  //  Buscar un registro por ID
   async findOne(id: number): Promise<RegistroIngreso> {
     const registro = await this.repo.findOne({
       where: { id },
@@ -44,7 +47,7 @@ export class RegistrosIngresosService {
     return registro;
   }
 
-  // ✅ Crear registro usando el guardia del turno activo
+  // Crear registro usando el guardia del turno activo
   async create(dto: CreateRegistroIngresoDto): Promise<RegistroIngreso> {
     try {
       // Buscar turno activo (sin observacion_termino)
@@ -60,7 +63,7 @@ export class RegistrosIngresosService {
         );
       }
 
-      const guardia = turnoActivo.guardia;
+      const {guardia} = turnoActivo;
 
       // Limpieza y validación de RUT
       let rutLimpio: string | null = null;
@@ -93,10 +96,12 @@ export class RegistrosIngresosService {
       if (!registro) {
         throw new NotFoundException('Error al obtener el registro recién creado.');
       }
+      this.gateway.emitirNuevoRegistro(registro);
 
       return registro;
+
     } catch (error) {
-      console.error('❌ Error al registrar ingreso:', error);
+      console.error(' Error al registrar ingreso:', error);
       throw new InternalServerErrorException(error.message || 'Error al registrar el ingreso.');
     }
   }

@@ -6,9 +6,10 @@ import { RegistrosIngresosService } from './registros-ingreso.service';
 import { RegistrosIngresosController } from './registros-ingreso.controller';
 import { RegistrosConsumer } from './registros-consumer';
 import { Turno } from '../turnos/turno.entity';
+import { RegistrosGateway } from './registros.gateway';
 @Module({
   imports: [TypeOrmModule.forFeature([RegistroIngreso, Guardia, Turno])],
   controllers: [RegistrosIngresosController],
-  providers: [RegistrosIngresosService, RegistrosConsumer],
+  providers: [RegistrosIngresosService, RegistrosConsumer, RegistrosGateway],
 })
 export class RegistrosIngresosModule {}
