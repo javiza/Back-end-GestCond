@@ -164,13 +164,14 @@ export class RegistrosIngresosService implements OnModuleInit {
   }
 
   async obtenerDeliveriesLargos(): Promise<RegistroIngreso[]> {
-    return this.repo.query(`
-      SELECT *
-      FROM registros_ingreso
-      WHERE tipo_visita = 'delivery'
-        AND alerta_delivery = true
-        AND alerta_leida = false
-      ORDER BY fecha_hora_ingreso DESC;
-    `);
+   return this.repo.find({
+  where: {
+    tipoVisita: 'delivery',
+    alertaDelivery: true,
+    alertaLeida: false,
+  },
+  order: { fechaHoraIngreso: 'DESC' }
+});
+
   }
 }
