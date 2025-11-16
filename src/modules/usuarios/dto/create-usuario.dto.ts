@@ -28,7 +28,7 @@ export class CreateUsuarioDto {
   @ApiProperty({ example: 'Password123!', description: 'Contraseña segura (mínimo 8 caracteres)' })
   @IsNotEmpty()
   @MinLength(8)
-  @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).+$/, {
+  @Matches(/^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8}$/, {
     message: 'La contraseña debe contener mayúscula, minúscula, número y símbolo',
   })
   password: string;
@@ -37,3 +37,4 @@ export class CreateUsuarioDto {
 @IsEnum(RolUsuario, { message: 'El rol debe ser administrador o usuario' })
 rol: RolUsuario;
 }
+

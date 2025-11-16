@@ -40,17 +40,21 @@ export class RegistroIngreso {
   })
   tipoVisita: 'visita' | 'delivery' | 'trabajador';
 
-  @CreateDateColumn({
-    name: 'fecha_hora_ingreso',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  fechaHoraIngreso: Date;
+  @Column({ name: 'fecha_hora_ingreso', type: 'timestamp' })
+fechaHoraIngreso: Date;
+
 
   @Column({ name: 'fecha_hora_salida', type: 'timestamp', nullable: true })
   fechaHoraSalida?: Date | null;
 
-  // 🔹 FK hacia guardias (como en tu tabla)
+  @Column({ name: 'alerta_delivery', type: 'boolean', default: false })
+alertaDelivery: boolean;
+
+@Column({ name: 'alerta_leida', type: 'boolean', default: false })
+alertaLeida: boolean;
+
+
+  //  FK hacia guardias (como en tu tabla)
   @ManyToOne(() => Guardia, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_guardia' })
   guardia: Guardia;

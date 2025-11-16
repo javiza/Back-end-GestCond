@@ -23,44 +23,58 @@ export class TurnosService {
 
   //  Crear turno (inicio)
 async create(dto: CreateTurnoDto): Promise<Turno> {
-  // Buscar guardia según id recibido
+  // Buscar guardia
   const guardia = await this.guardiasRepo.findOne({ where: { id: dto.id_guardia } });
   if (!guardia) {
     throw new NotFoundException(`No se encontró un guardia con ID ${dto.id_guardia}.`);
   }
 
-  // Crear turno con relación ManyToOne
+  // Fecha real en Chile
+  const fechaChile = new Date(
+    new Date().toLocaleString('sv-SE', { timeZone: 'America/Santiago' })
+      .replace(' ', 'T')
+  );
+
   const nuevoTurno = this.repo.create({
     observacion_inicio: dto.observacion_inicio,
-    guardia: guardia, // Asignar la entidad guardia completa
+    guardia,
+    fecha_hora_inicio: fechaChile,
   });
 
-  // Guardar turno y devolver con relación cargada
-  
-const guardado = await this.repo.save(nuevoTurno);
-const turnoCompleto = await this.repo.findOne({
-  where: { id: guardado.id },
-  relations: ['guardia'],
-});
+  const guardado = await this.repo.save(nuevoTurno);
 
-if (!turnoCompleto) {
-  throw new NotFoundException('Error al obtener el turno recién creado.');
+  // FIX: validar null para cumplir con Promise<Turno>
+  const turnoCompleto = await this.repo.findOne({
+    where: { id: guardado.id },
+    relations: ['guardia'],
+  });
+
+  if (!turnoCompleto) {
+    throw new NotFoundException('No se pudo obtener el turno recién creado.');
+  }
+
+  return turnoCompleto;
 }
 
-return turnoCompleto;
-
-}
 
 
   // Cerrar turno (término)
   async cerrarTurno(id: number, dto: CerrarTurnoDto): Promise<Turno> {
-    const turno = await this.repo.findOne({ where: { id } });
-    if (!turno) throw new NotFoundException('Turno no encontrado.');
+  const turno = await this.repo.findOne({ where: { id } });
+  if (!turno) throw new NotFoundException('Turno no encontrado.');
 
-    turno.observacion_termino = dto.observacion_termino;
-    // fecha_hora_termino se actualiza automáticamente con @UpdateDateColumn
-    return this.repo.save(turno);
-  }
+  turno.observacion_termino = dto.observacion_termino;
+
+  //  FECHA CHILE EN TÉRMINO DEL TURNO
+  turno.fecha_hora_termino = new Date(
+    new Date()
+      .toLocaleString('sv-SE', { timeZone: 'America/Santiago' })
+      .replace(' ', 'T')
+  );
+
+  return this.repo.save(turno);
+}
+
 
   //  Listar todos los turnos
   async findAll(): Promise<Turno[]> {

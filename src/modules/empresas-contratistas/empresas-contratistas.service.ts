@@ -17,6 +17,18 @@ export class EmpresasContratistasService {
     private readonly repo: Repository<EmpresaContratista>,
   ) {}
 
+  private formatRut(rut: string): string | null {
+    if (!rut) return null;
+    let clean = rut.replace(/\./g, '').toUpperCase().trim();
+    if (!clean.includes('-') && clean.length >= 2) {
+      clean = `${clean.slice(0, -1)}-${clean.slice(-1)}`;
+    }
+    if (!/^[0-9]{7,8}-[0-9K]$/.test(clean)) {
+      throw new BadRequestException('El formato del RUT no es válido. Ejemplo: 12345678-9');
+    }
+    return clean;
+  }
+
   async findAll(): Promise<EmpresaContratista[]> {
     return await this.repo.find({
       order: { id: 'DESC' },
@@ -33,17 +45,7 @@ export class EmpresasContratistasService {
 
   async create(dto: CreateEmpresaContratistaDto): Promise<EmpresaContratista> {
     try {
-      // Limpieza de RUT (manteniendo el guion)
-      const rutLimpio = dto.rut
-        ? dto.rut.replace(/\./g, '').toUpperCase().trim()
-        : null;
-
-      // Validación con guion (coincide con CHECK de la BD)
-      if (rutLimpio && !/^[0-9]{7,8}-[0-9K]$/.test(rutLimpio)) {
-        throw new BadRequestException(
-          'El formato del RUT no es válido. Ejemplo: 12345678-9',
-        );
-      }
+      const rutLimpio = dto.rut ? this.formatRut(dto.rut) : null;
 
       const nueva = this.repo.create({
         ...dto,
@@ -52,7 +54,6 @@ export class EmpresasContratistasService {
 
       return await this.repo.save(nueva);
     } catch (error) {
-      console.error('Error al crear empresa contratista:', error);
       if (error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException('No se pudo registrar la empresa');
     }
@@ -64,18 +65,8 @@ export class EmpresasContratistasService {
   ): Promise<EmpresaContratista> {
     const empresa = await this.findOne(id);
 
-    // Limpieza y validación del RUT al actualizar
-    const rutLimpio = dto.rut
-      ? dto.rut.replace(/\./g, '').toUpperCase().trim()
-      : empresa.rut;
+    const rutLimpio = dto.rut ? this.formatRut(dto.rut) : empresa.rut;
 
-    if (rutLimpio && !/^[0-9]{7,8}-[0-9K]$/.test(rutLimpio)) {
-      throw new BadRequestException(
-        'El formato del RUT no es válido. Ejemplo: 12345678-9',
-      );
-    }
-
-    // Si se desactiva, registrar fecha de término
     if (dto.activa === false && empresa.activa) {
       empresa.fecha_termino = new Date();
     }
@@ -85,7 +76,6 @@ export class EmpresasContratistasService {
     try {
       return await this.repo.save(empresa);
     } catch (error) {
-      console.error('Error al actualizar empresa:', error);
       if (error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException('No se pudo actualizar la empresa');
     }
@@ -93,6 +83,7 @@ export class EmpresasContratistasService {
 
   async toggleActiva(id: number, activa: boolean): Promise<EmpresaContratista> {
     const empresa = await this.findOne(id);
+
     if (empresa.activa === activa) {
       throw new BadRequestException(
         `La empresa ya se encuentra en estado ${activa ? 'activo' : 'inactivo'}`,
@@ -105,19 +96,18 @@ export class EmpresasContratistasService {
     return await this.repo.save(empresa);
   }
 
- async remove(id: number): Promise<{ message: string }> {
-  const empresa = await this.findOne(id);
+  async remove(id: number): Promise<{ message: string }> {
+    const empresa = await this.findOne(id);
 
-  if (!empresa.activa) {
-    throw new BadRequestException(`La empresa con ID ${id} ya está inactiva.`);
+    if (!empresa.activa) {
+      throw new BadRequestException(`La empresa con ID ${id} ya está inactiva.`);
+    }
+
+    empresa.activa = false;
+    empresa.fecha_termino = new Date();
+
+    await this.repo.save(empresa);
+
+    return { message: `Empresa contratista con ID ${id} desactivada correctamente.` };
   }
-
-  empresa.activa = false;
-  empresa.fecha_termino = new Date();
-
-  await this.repo.save(empresa);
-
-  return { message: `Empresa contratista con ID ${id} desactivada correctamente.` };
-}
-
 }

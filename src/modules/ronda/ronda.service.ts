@@ -36,24 +36,36 @@ export class RondasService {
 
   // Crear una nueva ronda asociada al turno activo del guardia
   async create(dto: CreateRondaDto): Promise<Ronda> {
-    // Buscar turno activo
-    const turnoActivo = await this.turnosRepo.findOne({
-      where: { observacion_termino: IsNull() },
-      relations: ['guardia'],
-      order: { fecha_hora_inicio: 'DESC' },
-    });
+  // Buscar turno activo
+  const turnoActivo = await this.turnosRepo.findOne({
+    where: { observacion_termino: IsNull() },
+    relations: ['guardia'],
+    order: { fecha_hora_inicio: 'DESC' },
+  });
 
-    if (!turnoActivo) {
-      throw new BadRequestException('No hay un turno activo de guardia en este momento.');
-    }
-
-    const nueva = this.repo.create({
-      observacion_ronda: dto.observacion_ronda,
-      turno: turnoActivo,
-    });
-
-    return this.repo.save(nueva);
+  if (!turnoActivo) {
+    throw new BadRequestException('No hay un turno activo de guardia en este momento.');
   }
+
+  // ================================
+  //   GENERAR FECHA CHILE REAL
+  // ================================
+  const fechaChile = new Date(
+    new Date().toLocaleString('sv-SE', { timeZone: 'America/Santiago' })
+      .replace(' ', 'T')
+  );
+
+  // Crear nueva ronda con hora chilena
+  const nueva = this.repo.create({
+    observacion_ronda: dto.observacion_ronda,
+    turno: turnoActivo,
+    fecha_hora_inicio: fechaChile,
+    fecha_hora_termino: fechaChile, // Se inicia igual, y luego se actualizará
+  });
+
+  return this.repo.save(nueva);
+}
+
 
   // Actualizar una ronda existente
   async update(id: number, dto: UpdateRondaDto) {

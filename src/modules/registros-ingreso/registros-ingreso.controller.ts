@@ -48,7 +48,27 @@ export class RegistrosIngresosController {
   async findAll() {
     return await this.service.findAll();
   }
+@Get('deliveries-largos')
+ @Roles(RolUsuario.GUARDIA)
+ @ApiOperation({ summary: 'Obtener delivery con exceso de tiempo' })
+async deliveriesLargos() {
+  return this.service.obtenerDeliveriesLargos();
+}
 
+// GET - Listar todas las visitas registradas (para administrador o analítica)
+  @Get('todas')
+  @Roles(RolUsuario.ADMINISTRADOR)
+  @ApiOperation({
+    summary: 'Listar todas las visitas registradas (modo completo)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Listado completo de todas las visitas registradas.',
+    type: [RegistroIngreso],
+  })
+  async listarTodas() {
+    return await this.service.listarTodasVisitas();
+  }
   // GET - Obtener registro por ID
   @Get(':id')
   @Roles(RolUsuario.GUARDIA)
@@ -65,15 +85,13 @@ export class RegistrosIngresosController {
   }
 
   // POST - Crear registro
-@Post()
-@Roles(RolUsuario.GUARDIA)
-async create(@Body() dto: CreateRegistroIngresoDto, @Request() req) {
-  const usuario = req.user;
-  dto.id_guardia = usuario.id; // id del usuario autenticado
-  return await this.service.create(dto);
-}
-
-
+  @Post()
+  @Roles(RolUsuario.GUARDIA)
+  async create(@Body() dto: CreateRegistroIngresoDto, @Request() req) {
+    const usuario = req.user;
+    dto.id_guardia = usuario.id; // id del usuario autenticado
+    return await this.service.create(dto);
+  }
 
   // PUT - Actualizar registro existente
   @Put(':id')
@@ -124,18 +142,11 @@ async create(@Body() dto: CreateRegistroIngresoDto, @Request() req) {
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.service.remove(id);
   }
-
-  // GET - Listar todas las visitas registradas (para administrador o analítica)
-@Get('todas')
-@Roles(RolUsuario.ADMINISTRADOR)
-@ApiOperation({ summary: 'Listar todas las visitas registradas (modo completo)' })
-@ApiResponse({
-  status: 200,
-  description: 'Listado completo de todas las visitas registradas.',
-  type: [RegistroIngreso],
-})
-async listarTodas() {
-  return await this.service.listarTodasVisitas();
+  @Patch(':id/alerta-leida')
+async marcarAlertaLeida(@Param('id') id: number) {
+  return this.service.marcarAlertaLeida(id);
 }
 
+
+  
 }

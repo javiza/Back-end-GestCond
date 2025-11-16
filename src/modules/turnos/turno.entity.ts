@@ -24,19 +24,20 @@ export class Turno {
   @Column({ type: 'text', name: 'observacion_termino', nullable: true })
   observacion_termino?: string;
 
-  @CreateDateColumn({
-    name: 'fecha_hora_inicio',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  fecha_hora_inicio: Date;
+ @Column({
+  name: 'fecha_hora_inicio',
+  type: 'timestamp',
+  default: () => 'CURRENT_TIMESTAMP',
+})
+fecha_hora_inicio: Date;
 
-  @UpdateDateColumn({
-    name: 'fecha_hora_termino',
-    type: 'timestamp',
-    nullable: true,
-  })
-  fecha_hora_termino?: Date;
+  @Column({
+  name: 'fecha_hora_termino',
+  type: 'timestamp',
+  nullable: true
+})
+fecha_hora_termino: Date | null;
+
 
  @Column({ name: 'id_guardia', type: 'int', nullable: true })
   id_guardia?: number;

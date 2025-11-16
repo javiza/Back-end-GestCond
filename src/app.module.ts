@@ -37,11 +37,12 @@ import { RegistroIngresosAdminModule } from './modules/registro-ingresos-admin/r
         type: 'postgres',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: parseInt(configService.get<string>('DB_PORT', '5432'), 10),
-        username: configService.get<string>('DB_USERNAME', ),
-        password: configService.get<string>('DB_PASSWORD', ),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
         synchronize: false, // En producción mejor false
+        timezone: 'local',
         logging: false,
 
         //  Render requiere SSL/TLS para conexiones externas

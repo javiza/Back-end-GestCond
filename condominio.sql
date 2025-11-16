@@ -1,44 +1,50 @@
--- =============================================
--- 🏘️ SISTEMA DE CONDOMINIO HABITACIONAL (versión final optimizada con auditoría completa)
--- Autor: Jonathan Bustos
--- Motor: PostgreSQL 16
--- =============================================
+-- ============================================================
+-- SISTEMA DE CONDOMINIO HABITACIONAL - BASE DE DATOS FINAL
+-- ============================================================
+
+-- Seleccionar BD activa
 SELECT current_database();
 
--- CREATE DATABASE condominio7;
--- drop database condominio;
--- =============================================
--- 1️⃣ TABLA: CASAS
--- =============================================
+-- ============================================================
+-- 1. TABLA: CASAS
+-- ============================================================
 CREATE TABLE casas (
   id SERIAL PRIMARY KEY,
   numero VARCHAR(6) NOT NULL UNIQUE,
   direccion VARCHAR(150) NOT NULL
 );
+SHOW TIMEZONE;
+SELECT NOW();
+UPDATE registros_ingreso
+SET fecha_hora_ingreso = fecha_hora_salida - INTERVAL '30 minutes'
+WHERE fecha_hora_salida < fecha_hora_ingreso;
 
--- =============================================
--- 2️⃣ TABLA: USUARIOS
--- =============================================
+
+
+-- ============================================================
+-- 2. TABLA: USUARIOS
+-- ============================================================
 CREATE TABLE usuarios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
   rut VARCHAR(12) UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  rol VARCHAR(20) CHECK (rol IN ('administrador', 'guardia', 'locatario')) NOT NULL,
+  rol VARCHAR(20) CHECK (rol IN ('administrador','guardia','locatario')) NOT NULL,
   activo BOOLEAN DEFAULT TRUE,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_usuarios_email ON usuarios(email);
 
--- =============================================
--- 3️⃣ TABLA: RESIDENTES
--- =============================================
+-- ============================================================
+-- 3. TABLA: RESIDENTES
+-- ============================================================
 CREATE TABLE residentes (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
   rut VARCHAR(12) UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
   email VARCHAR(100) UNIQUE NOT NULL,
-  telefono VARCHAR(20),--se agrega telefono
+  telefono VARCHAR(20),
   activo BOOLEAN DEFAULT TRUE,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_casa INT NULL,
@@ -47,17 +53,14 @@ CREATE TABLE residentes (
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
-ALTER TABLE residentes
-ADD COLUMN telefono VARCHAR(20);
-
--- =============================================
--- 4️⃣ TABLA: EMPRESAS CONTRATISTAS
--- =============================================
+-- ============================================================
+-- 4. TABLA: EMPRESAS CONTRATISTAS
+-- ============================================================
 CREATE TABLE empresas_contratistas (
   id SERIAL PRIMARY KEY,
   nombre_encargado VARCHAR(100) NOT NULL,
   nombre_empresa VARCHAR(100) NOT NULL,
-  rut VARCHAR(12)  UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),---cambie esta opcion y agrege la validacion del rut ya iniciada la base de datos
+  rut VARCHAR(12) UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
   rubro VARCHAR(100),
   telefono VARCHAR(20),
   email VARCHAR(100),
@@ -66,15 +69,15 @@ CREATE TABLE empresas_contratistas (
   activa BOOLEAN DEFAULT TRUE
 );
 
--- =============================================
--- 5️⃣ TABLA: GUARDIAS
--- =============================================
+-- ============================================================
+-- 5. TABLA: GUARDIAS
+-- ============================================================
 CREATE TABLE guardias (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
   rut VARCHAR(12) UNIQUE NOT NULL CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
-  telefono varchar(20),
-  email VARCHAR(100),--se agrega este campo
+  telefono VARCHAR(20),
+  email VARCHAR(100),
   activo BOOLEAN DEFAULT TRUE,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_usuario INT NULL,
@@ -83,22 +86,9 @@ CREATE TABLE guardias (
   FOREIGN KEY (id_empresa_contratista) REFERENCES empresas_contratistas(id) ON DELETE SET NULL
 );
 
-ALTER TABLE guardias ALTER COLUMN telefono TYPE VARCHAR(20);
-
-ALTER TABLE guardias DROP CONSTRAINT IF EXISTS guardias_email_key;
-ALTER TABLE guardias ADD COLUMN IF NOT EXISTS telefono VARCHAR(12);
-ALTER TABLE guardias
-  ADD CONSTRAINT fk_guardias_usuarios FOREIGN KEY (id_usuario)
-  REFERENCES usuarios(id) ON DELETE SET NULL;
-
-ALTER TABLE guardias
-  ADD CONSTRAINT fk_guardias_empresas FOREIGN KEY (id_empresa_contratista)
-  REFERENCES empresas_contratistas(id) ON DELETE SET NULL;
-
-
--- =============================================
--- 6️⃣ TABLA: VEHÍCULOS
--- =============================================
+-- ============================================================
+-- 6. TABLA: VEHICULOS
+-- ============================================================
 CREATE TABLE vehiculos (
   id SERIAL PRIMARY KEY,
   nombre_dueno VARCHAR(100) NOT NULL,
@@ -110,13 +100,10 @@ CREATE TABLE vehiculos (
   id_casa INT NOT NULL,
   FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE CASCADE
 );
-ALTER TABLE vehiculos DROP CONSTRAINT IF EXISTS vehiculos_tipo_vehiculo_check;
 
-ALTER TABLE vehiculos RENAME COLUMN nombre_dueño TO nombre_dueno;
-
--- =============================================
--- 7️⃣ TABLA: PERSONAL INTERNO
--- =============================================
+-- ============================================================
+-- 7. TABLA: PERSONAL INTERNO
+-- ============================================================
 CREATE TABLE personal_interno (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
@@ -129,9 +116,9 @@ CREATE TABLE personal_interno (
   FOREIGN KEY (id_empresa_contratista) REFERENCES empresas_contratistas(id) ON DELETE SET NULL
 );
 
--- =============================================
--- 8️⃣ TABLA: TRABAJOS
--- =============================================
+-- ============================================================
+-- 8. TABLA: TRABAJOS
+-- ============================================================
 CREATE TABLE trabajos (
   id SERIAL PRIMARY KEY,
   trabajo_realizado VARCHAR(100) NOT NULL,
@@ -141,76 +128,73 @@ CREATE TABLE trabajos (
   FOREIGN KEY (id_personal_interno) REFERENCES personal_interno(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 9️⃣ TABLA: TURNOS
--- =============================================
+-- ============================================================
+-- 9. TABLA: TURNOS
+-- ============================================================
 CREATE TABLE turnos (
   id SERIAL PRIMARY KEY,
   observacion_inicio TEXT NOT NULL,
-  observacion_termino TEXT  NULL,
+  observacion_termino TEXT NULL,
   fecha_hora_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_hora_termino TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_guardia INT NULL,
   FOREIGN KEY (id_guardia) REFERENCES guardias(id) ON DELETE SET NULL
 );
-ALTER TABLE turnos
-  RENAME COLUMN observacion_turno TO observacion_inicio;
 
-ALTER TABLE turnos
-  ADD COLUMN observacion_termino TEXT NULL;
--- =============================================
--- 🔟 TABLA: RONDAS
--- =============================================
+-- ============================================================
+-- 10. TABLA: RONDAS (VERSIÓN FINAL)
+-- ============================================================
 CREATE TABLE rondas (
   id SERIAL PRIMARY KEY,
   observacion_ronda TEXT NOT NULL,
   fecha_hora_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  fecha_hora_termino TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_hora_termino TIMESTAMP NULL,
   id_turno INT NULL,
   FOREIGN KEY (id_turno) REFERENCES turnos(id) ON DELETE SET NULL
 );
 
--- =============================================
--- 11️⃣ TABLA: AUTORIZACION_QR
--- =============================================
+-- ============================================================
+-- 11. TABLA: AUTORIZACION_QR
+-- ============================================================
 CREATE TABLE autorizacion_qr (
   id SERIAL PRIMARY KEY,
   codigo_qr VARCHAR(255) UNIQUE NOT NULL,
-  nombre_visita VARCHAR (100) not null,
+  nombre_visita VARCHAR(100) NOT NULL,
   motivo TEXT,
-  usado BOOLEAN default false,
+  usado BOOLEAN DEFAULT FALSE,
   fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   id_usuario INT NULL,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
-
-ALTER TABLE autorizacion_qr ADD COLUMN IF NOT EXISTS usado BOOLEAN DEFAULT false;
-
--- =============================================
--- 12️⃣ TABLA: REGISTROS DE INGRESO
--- =============================================
+-- ============================================================
+-- 12. TABLA: REGISTROS DE INGRESO
+-- ============================================================
 CREATE TABLE registros_ingreso (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100),
-  rut VARCHAR(12) CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),--se agregue unique 
+  rut VARCHAR(12) CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
   patente VARCHAR(10),
   tipo_vehiculo VARCHAR(20),
   autorizado_por VARCHAR(100) NOT NULL,
-  lugar_destino VARCHAR (100) not null, --agregado recientemente
-  tipo_visita VARCHAR(20) CHECK (tipo_visita IN ('visita', 'delivery', 'trabajador')) NOT NULL,
+  lugar_destino VARCHAR(100) NOT NULL,
+  tipo_visita VARCHAR(20) CHECK (tipo_visita IN ('visita','delivery','trabajador')) NOT NULL,
   fecha_hora_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_hora_salida TIMESTAMP,
+  alerta_delivery BOOLEAN DEFAULT FALSE,
+  alerta_leida BOOLEAN DEFAULT FALSE,
   id_autorizacion_qr INT NULL,
   id_guardia INT NOT NULL,
+
   FOREIGN KEY (id_autorizacion_qr) REFERENCES autorizacion_qr(id) ON DELETE SET NULL,
+
   FOREIGN KEY (id_guardia) REFERENCES guardias(id) ON DELETE CASCADE
 );
-ALTER TABLE registros_ingreso DROP CONSTRAINT registros_ingreso_rut_key;
 
--- =============================================
--- 13️⃣ TABLA: AUDITORÍA
--- =============================================
+
+-- ============================================================
+-- 13. TABLA: AUDITORÍA
+-- ============================================================
 CREATE TABLE auditoria (
   id SERIAL PRIMARY KEY,
   accion VARCHAR(50),
@@ -219,9 +203,9 @@ CREATE TABLE auditoria (
   fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =============================================
--- 🧠 FUNCIÓN DE AUDITORÍA ROBUSTA
--- =============================================
+-- ============================================================
+-- FUNCIÓN DE AUDITORÍA
+-- ============================================================
 CREATE OR REPLACE FUNCTION log_auditoria()
 RETURNS TRIGGER AS $$
 DECLARE v_user_id INT;
@@ -243,36 +227,35 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- =============================================
--- 🔔 TRIGGERS DE AUDITORÍA
--- =============================================
-DROP TRIGGER IF EXISTS trg_audit_usuarios ON usuarios;
-CREATE TRIGGER trg_audit_usuarios AFTER INSERT OR UPDATE OR DELETE ON usuarios
+-- ============================================================
+-- TRIGGERS AUDITORÍA
+-- ============================================================
+CREATE TRIGGER trg_audit_usuarios
+AFTER INSERT OR UPDATE OR DELETE ON usuarios
 FOR EACH ROW EXECUTE FUNCTION log_auditoria();
 
-DROP TRIGGER IF EXISTS trg_audit_residentes ON residentes;
-CREATE TRIGGER trg_audit_residentes AFTER INSERT OR UPDATE OR DELETE ON residentes
+CREATE TRIGGER trg_audit_residentes
+AFTER INSERT OR UPDATE OR DELETE ON residentes
 FOR EACH ROW EXECUTE FUNCTION log_auditoria();
 
-DROP TRIGGER IF EXISTS trg_audit_guardias ON guardias;
-CREATE TRIGGER trg_audit_guardias AFTER INSERT OR UPDATE OR DELETE ON guardias
+CREATE TRIGGER trg_audit_guardias
+AFTER INSERT OR UPDATE OR DELETE ON guardias
 FOR EACH ROW EXECUTE FUNCTION log_auditoria();
 
-DROP TRIGGER IF EXISTS trg_audit_empresas_contratistas ON empresas_contratistas;
-CREATE TRIGGER trg_audit_empresas_contratistas AFTER INSERT OR UPDATE OR DELETE ON empresas_contratistas
+CREATE TRIGGER trg_audit_empresas_contratistas
+AFTER INSERT OR UPDATE OR DELETE ON empresas_contratistas
 FOR EACH ROW EXECUTE FUNCTION log_auditoria();
 
-DROP TRIGGER IF EXISTS trg_audit_registros_ingreso ON registros_ingreso;
-CREATE TRIGGER trg_audit_registros_ingreso AFTER INSERT OR UPDATE OR DELETE ON registros_ingreso
+CREATE TRIGGER trg_audit_registros_ingreso
+AFTER INSERT OR UPDATE OR DELETE ON registros_ingreso
 FOR EACH ROW EXECUTE FUNCTION log_auditoria();
 
--- =============================================
+-- ============================================================
 -- SCHEMA ANALYTICS (Big Data / BI)
--- =============================================
+-- ============================================================
 CREATE SCHEMA IF NOT EXISTS analytics;
 SET search_path TO analytics, public;
 
-DROP MATERIALIZED VIEW IF EXISTS analytics.hechos_ingresos;
 CREATE MATERIALIZED VIEW analytics.hechos_ingresos AS
 SELECT 
   r.id AS id_registro,
@@ -295,9 +278,11 @@ LEFT JOIN public.usuarios u ON u.id = g.id_usuario
 LEFT JOIN public.residentes res ON res.id_usuario = u.id
 LEFT JOIN public.casas c ON c.id = res.id_casa;
 
-CREATE INDEX IF NOT EXISTS idx_hechos_fecha ON analytics.hechos_ingresos (fecha_registro);
+CREATE INDEX idx_hechos_fecha ON analytics.hechos_ingresos (fecha_registro);
 
--- Dimensión de tiempo
+-- ============================================================
+-- TABLA DIMENSIÓN TIEMPO
+-- ============================================================
 CREATE TABLE IF NOT EXISTS dim_tiempo (
   id SERIAL PRIMARY KEY,
   fecha DATE UNIQUE NOT NULL,
@@ -310,24 +295,17 @@ CREATE TABLE IF NOT EXISTS dim_tiempo (
 
 INSERT INTO dim_tiempo (fecha, anio, mes, dia, nombre_dia, nombre_mes)
 SELECT d::date,
-       EXTRACT(YEAR FROM d)::int,
-       EXTRACT(MONTH FROM d)::int,
-       EXTRACT(DAY FROM d)::int,
+       EXTRACT(YEAR FROM d),
+       EXTRACT(MONTH FROM d),
+       EXTRACT(DAY FROM d),
        TO_CHAR(d, 'TMDay'),
        TO_CHAR(d, 'TMMonth')
-FROM generate_series('2020-01-01'::date, '2035-12-31'::date, '1 day') AS d
+FROM generate_series('2020-01-01'::date, '2035-12-31'::date, '1 day') d
 ON CONFLICT (fecha) DO NOTHING;
 
-CREATE INDEX IF NOT EXISTS idx_hechos_tipo_fecha ON analytics.hechos_ingresos (fecha_registro);
-
-
-CREATE UNIQUE INDEX idx_hechos_ingresos_unique_id
-ON analytics.hechos_ingresos (id);
-
-
--- =============================================
+-- ============================================================
 -- USUARIOS BASE
--- =============================================
+-- ============================================================
 INSERT INTO usuarios (nombre, rut, email, password, rol)
 VALUES
 ('Usuario', '22222222-7', 'usuario@correo.cl', '$2b$10$a.cvUAhtIbH2xHKOYU.0mOhwLAz35KRXTj.0uBIr43K.xJL1ifFju', 'guardia'),

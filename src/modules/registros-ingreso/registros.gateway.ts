@@ -18,4 +18,8 @@ export class RegistrosGateway {
   emitirNuevoRegistro(data: any) {
     this.server.emit('actualizarRegistros', data);
   }
+  
+  emitirAlertaDelivery(registro: any) {
+    this.server.emit('alerta-delivery', registro);
+  }
 }
