@@ -20,6 +20,10 @@ import { TrabajosModule } from './modules/trabajos/trabajos.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RegistroIngresosAdminModule } from './modules/registro-ingresos-admin/registro-ingresos-admin.module';
+import { KeepAliveService } from './common/keepalive.service';
+import { HealthController } from './common/health/health.controller';
+import { HealthService } from './common/health/health.service';
+import { HealthModule } from './common/health/health.module';
 
 @Module({
   imports: [
@@ -42,6 +46,7 @@ import { RegistroIngresosAdminModule } from './modules/registro-ingresos-admin/r
         database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
         synchronize: false,
+       
 
         //  Evita caídas y mejora reconexión con Render
         retryAttempts: 15,
@@ -74,6 +79,9 @@ import { RegistroIngresosAdminModule } from './modules/registro-ingresos-admin/r
     ResidentesModule,
     TurnosModule,
     RegistroIngresosAdminModule,
+     HealthModule,
   ],
+  
+
 })
 export class AppModule {}
