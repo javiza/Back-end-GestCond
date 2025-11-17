@@ -5,11 +5,21 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
+  // === Zona horaria Chile ===
   process.env.TZ = 'America/Santiago';
+
+  // === Manejo global de errores fuera del control de Nest ===
+  process.on('unhandledRejection', (reason) => {
+    console.error(' Unhandled Promise Rejection:', reason);
+  });
+
+  process.on('uncaughtException', (error) => {
+    console.error(' Uncaught Exception:', error);
+  });
 
   const app = await NestFactory.create(AppModule);
 
-  // === ACTIVAR CORS GLOBAL PARA HTTP + WEBSOCKETS ===
+  // === CORS para Front y WebSockets ===
   app.enableCors({
     origin: [
       'http://localhost:4200',
@@ -20,13 +30,13 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // === ADAPTER CORRECTO PARA SOCKET.IO ===
+  // === Adaptador WebSocket ===
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  // Filtro global
+  // === Filtro Global de Excepciones HTTP ===
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
-  // === Swagger ===
+  // === Documentación Swagger ===
   const config = new DocumentBuilder()
     .setTitle('Gestión Condominio Habitacional API')
     .setDescription('API REST para la administración del condominio.')
@@ -36,6 +46,9 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  // === Shutdown Hooks (Render a veces congela procesos) ===
+  app.enableShutdownHooks();
 
   const PORT = process.env.PORT || 3000;
   await app.listen(PORT);

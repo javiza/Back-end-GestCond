@@ -20,42 +20,44 @@ import { TrabajosModule } from './modules/trabajos/trabajos.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RegistroIngresosAdminModule } from './modules/registro-ingresos-admin/registro-ingresos-admin.module';
+
 @Module({
   imports: [
-     ScheduleModule.forRoot(),
-    //  Carga variables de entorno (.env)
+    ScheduleModule.forRoot(),
+
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    //  Conexión PostgreSQL dinámica y segura (Render compatible)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DB_HOST', 'localhost'),
+        host: configService.get<string>('DB_HOST'),
         port: parseInt(configService.get<string>('DB_PORT', '5432'), 10),
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
-        synchronize: false, // En producción mejor false
-        timezone: 'local',
-        logging: false,
+        synchronize: false,
 
-        //  Render requiere SSL/TLS para conexiones externas
+        //  Evita caídas y mejora reconexión con Render
+        retryAttempts: 15,
+        retryDelay: 3000,
+        keepConnectionAlive: true,
+
         ssl: {
           rejectUnauthorized: false,
         },
+
+        logging: false,
       }),
     }),
 
-    //  Kafka (solo si está habilitado)
     ...(process.env.USE_KAFKA === 'true' ? [KafkaModule] : []),
 
-    //  Módulos funcionales
     UsuariosModule,
     AuthModule,
     AnalyticsModule,
