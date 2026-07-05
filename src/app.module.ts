@@ -24,7 +24,7 @@ import { KeepAliveService } from './common/keepalive.service';
 import { HealthController } from './common/health/health.controller';
 import { HealthService } from './common/health/health.service';
 import { HealthModule } from './common/health/health.module';
-
+import { FamiliaresModule } from './modules/familiares/familiares.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -80,6 +80,7 @@ import { HealthModule } from './common/health/health.module';
     TurnosModule,
     RegistroIngresosAdminModule,
      HealthModule,
+     FamiliaresModule,
   ],
   
 

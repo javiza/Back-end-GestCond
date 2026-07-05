@@ -1,7 +1,7 @@
 -- ============================================================
 -- SISTEMA DE CONDOMINIO HABITACIONAL - BASE DE DATOS FINAL
 -- ============================================================
-
+create database agencia_viajes;
 -- Seleccionar BD activa
 SELECT current_database();
 
@@ -10,7 +10,7 @@ SELECT current_database();
 -- ============================================================
 CREATE TABLE casas (
   id SERIAL PRIMARY KEY,
-  numero VARCHAR(6) NOT NULL UNIQUE,
+  numero VARCHAR(6) NOT NULL,
   direccion VARCHAR(150) NOT NULL
 );
 SHOW TIMEZONE;
@@ -19,8 +19,13 @@ UPDATE registros_ingreso
 SET fecha_hora_ingreso = fecha_hora_salida - INTERVAL '30 minutes'
 WHERE fecha_hora_salida < fecha_hora_ingreso;
 
+--- se cambia numeracion que no sea de valor UNIQUE:
+SELECT constraint_name
+FROM information_schema.table_constraints
+WHERE table_name='casas';
 
-
+ALTER TABLE casas
+DROP CONSTRAINT casas_numero_key;
 -- ============================================================
 -- 2. TABLA: USUARIOS
 -- ============================================================
@@ -91,14 +96,48 @@ CREATE TABLE guardias (
 -- ============================================================
 CREATE TABLE vehiculos (
   id SERIAL PRIMARY KEY,
-  nombre_dueno VARCHAR(100) NOT NULL,
   patente VARCHAR(10) UNIQUE NOT NULL,
   marca VARCHAR(50),
   modelo VARCHAR(50),
   color VARCHAR(30),
   tipo_vehiculo VARCHAR(20),
   id_casa INT NOT NULL,
-  FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE CASCADE
+  id_familiar INT,
+  FOREIGN KEY (id_casa) REFERENCES casas(id) ON DELETE cascade,
+  FOREIGN KEY (id_familiar) REFERENCES familiares(id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- 7 NUEVA TABLA: FAMILIARES
+-- ============================================================
+
+CREATE TABLE familiares (
+
+    id SERIAL PRIMARY KEY,
+
+    nombre VARCHAR(100) NOT NULL,
+
+    rut VARCHAR(12) UNIQUE
+    CHECK (
+        rut ~ '^[0-9]{7,8}-[0-9kK]$'
+    ),
+
+    parentesco VARCHAR(50),
+
+    telefono VARCHAR(20),
+
+    email VARCHAR(100),
+
+    activo BOOLEAN DEFAULT TRUE,
+
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    id_residente INT NOT NULL,
+
+    FOREIGN KEY (id_residente)
+    REFERENCES residentes(id)
+    ON DELETE CASCADE
+
 );
 
 -- ============================================================
@@ -161,22 +200,7 @@ CREATE TABLE autorizacion_qr (
   codigo_qr VARCHAR(255) UNIQUE NOT NULL,
   nombre_visita VARCHAR(100) NOT NULL,
   motivo TEXT,
-  usado BOOLEAN DEFAULT FALSE,
-  fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  id_usuario INT NULL,
-  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
-);
-
--- ============================================================
--- 12. TABLA: REGISTROS DE INGRESO
--- ============================================================
-CREATE TABLE registros_ingreso (
-  id SERIAL PRIMARY KEY,
-  nombre VARCHAR(100),
-  rut VARCHAR(12) CHECK (rut ~ '^[0-9]{7,8}-[0-9kK]$'),
-  patente VARCHAR(10),
-  tipo_vehiculo VARCHAR(20),
-  autorizado_por VARCHAR(100) NOT NULL,
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   lugar_destino VARCHAR(100) NOT NULL,
   tipo_visita VARCHAR(20) CHECK (tipo_visita IN ('visita','delivery','trabajador')) NOT NULL,
   fecha_hora_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -191,7 +215,7 @@ CREATE TABLE registros_ingreso (
   FOREIGN KEY (id_guardia) REFERENCES guardias(id) ON DELETE CASCADE
 );
 
-
+SELECT * FROM residentes;
 -- ============================================================
 -- 13. TABLA: AUDITORÍA
 -- ============================================================
@@ -310,3 +334,117 @@ INSERT INTO usuarios (nombre, rut, email, password, rol)
 VALUES
 ('Usuario', '22222222-7', 'usuario@correo.cl', '$2b$10$a.cvUAhtIbH2xHKOYU.0mOhwLAz35KRXTj.0uBIr43K.xJL1ifFju', 'guardia'),
 ('Admin', '11111111-1', 'admin@correo.cl', '$2b$10$LpTPgqRoqgn/6p36sixWCu2TWR6quRN.NbZDTKE1OJQl7Fv7JO.Sy', 'administrador');
+------- 
+------- modificaciones y agregando tabla llamada familiares
+-- ============================================================
+-- ALTER VEHICULOS
+-- ============================================================
+
+ALTER TABLE vehiculos
+
+ADD COLUMN id_residente INT NULL,
+
+ADD COLUMN id_familiar INT NULL;
+
+ALTER TABLE vehiculos
+
+ADD CONSTRAINT fk_vehiculo_residente
+
+FOREIGN KEY (id_residente)
+
+REFERENCES residentes(id)
+
+ON DELETE SET NULL;
+ALTER TABLE vehiculos
+
+ADD CONSTRAINT fk_vehiculo_familiar
+
+FOREIGN KEY (id_familiar)
+
+REFERENCES familiares(id)
+
+ON DELETE SET NULL;
+ALTER TABLE vehiculos
+
+DROP COLUMN nombre_dueno;
+ALTER TABLE vehiculos
+
+ADD CONSTRAINT chk_dueno_unico
+
+CHECK (
+
+    (
+        id_residente IS NOT NULL
+        AND
+        id_familiar IS NULL
+    )
+
+    OR
+
+    (
+        id_residente IS NULL
+        AND
+        id_familiar IS NOT NULL
+    )
+
+);
+
+
+-- utlima :
+------- modificaciones y agregando tabla llamada familiares
+
+ALTER TABLE vehiculos
+ADD COLUMN id_residente INT NULL,
+ADD COLUMN id_familiar INT NULL;
+
+ALTER TABLE vehiculos
+ADD CONSTRAINT fk_vehiculo_residente
+FOREIGN KEY (id_residente)
+REFERENCES residentes(id)
+ON DELETE SET NULL;
+
+ALTER TABLE vehiculos
+ADD CONSTRAINT fk_vehiculo_familiar
+FOREIGN KEY (id_familiar)
+REFERENCES familiares(id)
+ON DELETE SET NULL;
+
+ALTER TABLE vehiculos
+DROP COLUMN nombre_dueno;
+
+ALTER TABLE vehiculos
+ADD CONSTRAINT chk_dueno_unico
+CHECK (
+(
+id_residente IS NOT NULL
+AND id_familiar IS NULL
+)
+OR
+(
+id_residente IS NULL
+AND id_familiar IS NOT NULL
+)
+);
+
+SELECT
+*
+FROM vehiculos;
+
+ALTER TABLE vehiculos
+ADD CONSTRAINT chk_dueno_unico
+CHECK (
+
+(
+id_residente IS NOT NULL
+AND id_familiar IS NULL
+)
+
+OR
+
+(
+id_residente IS NULL
+AND id_familiar IS NOT NULL
+)
+
+);
+

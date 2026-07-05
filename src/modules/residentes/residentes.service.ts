@@ -39,9 +39,20 @@ export class ResidentesService {
       relations: ['casa', 'usuario'],
       order: { id: 'ASC' },
     });
+    
   }
+// async findAll(): Promise<Residente[]> {
 
-  async findOne(id: number): Promise<Residente> {
+//   const residentes = await this.repo.find({
+//     relations:['casa','usuario'],
+//     order:{id:'ASC'}
+//   });
+
+//   console.log('BACKEND RESIDENTES:', residentes);
+
+//   return residentes;
+// }
+async findOne(id: number): Promise<Residente> {
     const residente = await this.repo.findOne({
       where: { id },
       relations: ['casa', 'usuario'],

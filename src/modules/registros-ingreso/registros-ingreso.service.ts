@@ -117,9 +117,13 @@ export class RegistrosIngresosService implements OnModuleInit {
 
       return registro;
 
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
+    } catch (error: any) {
+  console.error(error);
+
+  throw new InternalServerErrorException(
+    error?.message || 'Error interno del servidor'
+  );
+}
   }
 
   async update(id: number, dto: UpdateRegistroIngresoDto): Promise<RegistroIngreso> {
